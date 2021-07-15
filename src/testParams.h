@@ -1,0 +1,8 @@
+#ifndef _TEST_PARAMS_H
+#define _TEST_PARAMS_H
+
+#define VITIS_MEM_ALIGNMENT (64)
+
+#define TRANSACTIONS_BLKS (200000)
+
+#endif

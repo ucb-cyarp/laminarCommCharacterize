@@ -1,0 +1,7 @@
+#ifndef _LAMINAR_FIFO_PARAMS_H
+#define _LAMINAR_FIFO_PARAMS_H
+
+#define FIFO_BLK_SIZE_CPLX_FLOAT (78)
+#define FIFO_LEN_BLKS (31)
+
+#endif
