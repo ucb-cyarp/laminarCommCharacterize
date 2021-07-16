@@ -3,6 +3,8 @@
 
 #define VITIS_MEM_ALIGNMENT (64)
 
-#define TRANSACTIONS_BLKS (2000000)
+#ifndef TRANSACTIONS_BLKS
+    #define TRANSACTIONS_BLKS (2000000)
+#endif
 
 #endif
