@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "laminarFifoRunner.h"
 
@@ -49,7 +50,7 @@
  * Note: This function allocates a new string which should be freed after use
  */
 char* genReportName(const char* reportPrefix, const char* reportSuffix){
-    int reportNameLen = strlen(reportPrefix) + strlen(reportSuffix);
+    int reportNameLen = strlen(reportPrefix) + strlen(reportSuffix) + 1; //+1 For EOL
     char* reportName = malloc(reportNameLen*sizeof(char));
     strcpy(reportName, reportPrefix);
     strcat(reportName, reportSuffix);
@@ -63,10 +64,11 @@ char* genReportName(const char* reportPrefix, const char* reportSuffix){
  */
 void runIntraL3SingleFifo(char* reportPrefix){
     static_assert(CORES_PER_L3>1, "Intra-L3 Test Requires >1 Core Per L3");
+    printf("=== IntraL3SingleFifo ===\n");
 
     for(int i = 1; i<CORES_PER_L3; i++){
         char reportNameSuffix[80];
-        snprintf(reportNameSuffix, 80, "_intraL3_singleFifo_L3-%d_L3CPUA-%d_L3CPUB%d.csv", START_L3, 0, i);
+        snprintf(reportNameSuffix, 80, "_intraL3_singleFifo_L3-%d_L3CPUA-%d_L3CPUB-%d.csv", START_L3, 0, i);
         char* reportName = genReportName(reportPrefix, reportNameSuffix);
         
         int serverCPUs[1] = {CORE_MAP[START_L3][0]};
@@ -83,10 +85,11 @@ void runIntraL3SingleFifo(char* reportPrefix){
  */
 void runInterL3SingleFifo(char* reportPrefix){
     static_assert(START_L3+1<L3_S, "Inter-L3 Test Requires >1 L3s to be Tested");
+    printf("=== InterL3SingleFifo ===\n");
 
     for(int i = 1; i<L3_S-START_L3; i++){
         char reportNameSuffix[80];
-        snprintf(reportNameSuffix, 80, "_intraL3_singleFifo_L3A-%d_L3B-%d.csv", START_L3, START_L3+i);
+        snprintf(reportNameSuffix, 80, "_interL3_singleFifo_L3A-%d_L3B-%d.csv", START_L3, START_L3+i);
         char* reportName = genReportName(reportPrefix, reportNameSuffix);
 
         int serverCPUs[1] = {CORE_MAP[START_L3][0]};
@@ -101,6 +104,8 @@ void runInterL3SingleFifo(char* reportPrefix){
  */
 void runIntraL3SingleL3(char* reportPrefix){
     static_assert(CORES_PER_L3>1, "Intra-L3 Test Requires >1 Core Per L3");
+    printf("=== IntraL3SingleL3 ===\n");
+
     char reportNameSuffix[80];
     snprintf(reportNameSuffix, 80, "_intraL3_singleL3_L3-%d.csv", START_L3);
     char* reportName = genReportName(reportPrefix, reportNameSuffix);
@@ -127,6 +132,8 @@ void runIntraL3SingleL3(char* reportPrefix){
  */
 void runIntraL3AllL3(char* reportPrefix){
     static_assert(CORES_PER_L3>1, "Intra-L3 Test Requires >1 Core Per L3");
+    printf("=== IntraL3AllL3 ===\n");
+
     char* reportName = genReportName(reportPrefix, "_intraL3_allL3.csv");
 
     int numFifosPer = CORES_PER_L3/2; //Round Down
@@ -153,6 +160,8 @@ void runIntraL3AllL3(char* reportPrefix){
  */
 void runInterL3SingleL3(char* reportPrefix){
     static_assert(START_L3+1<L3_S, "Inter-L3 Test Requires >1 L3s to be Tested");
+    printf("=== InterL3SingleL3 ===\n");
+
     char* reportName = genReportName(reportPrefix, "_interL3_singleL3.csv");
 
     int numFifos = CORES_PER_L3;
@@ -176,6 +185,8 @@ void runInterL3SingleL3(char* reportPrefix){
  */
 void runInterL3AllL3(char* reportPrefix){
     static_assert(START_L3+1<L3_S, "Inter-L3 Test Requires >1 L3s to be Tested");
+    printf("=== InterL3AllL3 ===\n");
+
     char* reportName = genReportName(reportPrefix, "_interL3_AllL3.csv");
 
     int numL3Pairs = (L3_S-START_L3)/2; //Round Down
@@ -184,10 +195,9 @@ void runInterL3AllL3(char* reportPrefix){
     int serverCPUs[numFifos];
     int clientCPUs[numFifos];
 
-
     for(int l3 = 0; l3<numL3Pairs; l3++){
         for(int fifo = 0; fifo<CORES_PER_L3; fifo++){
-            int ind = l3*CORES_PER_L3*2+fifo;
+            int ind = l3*CORES_PER_L3+fifo;
             serverCPUs[ind] = CORE_MAP[START_L3+l3*2  ][fifo];
             clientCPUs[ind] = CORE_MAP[START_L3+l3*2+1][fifo];
         }
@@ -203,15 +213,17 @@ void runInterL3AllL3(char* reportPrefix){
  */
 void runInterL3OneToMultiple(char* reportPrefix){
     static_assert(START_L3+CORES_PER_L3<L3_S, "Inter-L3 Test Requires >1 L3s to be Tested");
+    printf("=== InterL3OneToMultiple ===\n");
+
     char* reportName = genReportName(reportPrefix, "_interL3_OneToMultiple.csv");
 
-    int numFifos = CORES_PER_L3*2;
+    int numFifos = CORES_PER_L3;
     int serverCPUs[numFifos];
     int clientCPUs[numFifos];
 
     for(int i = 0; i<CORES_PER_L3; i++){
-        serverCPUs[i] = CORE_MAP[START_L3  ][i];
-        clientCPUs[i] = CORE_MAP[START_L3+i][0];
+        serverCPUs[i] = CORE_MAP[START_L3    ][i];
+        clientCPUs[i] = CORE_MAP[START_L3+i+1][0];
     }
 
     runLaminarFifoBench(serverCPUs, clientCPUs, numFifos, reportName);

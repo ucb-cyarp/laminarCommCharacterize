@@ -175,7 +175,7 @@ fifo_runner_thread_vars_container_t* startThread(_Atomic int8_t* PartitionCrossi
     clientThreadVars->args.PartitionCrossingFIFO_writeOffsetPtr_re = PartitionCrossingFIFO_writeOffsetPtr_re;
     clientThreadVars->args.PartitionCrossingFIFO_arrayPtr_re = PartitionCrossingFIFO_arrayPtr_re;
     clientThreadVars->args.startTrigger = startTrigger;
-    clientThreadVars->args.readyFlag = serverReadyFlag;
+    clientThreadVars->args.readyFlag = clientReadyFlag;
 
     //Start threads
     status = pthread_create(&(serverThreadVars->thread), &(serverThreadVars->attr), fifo_server_thread, &(serverThreadVars->args));
