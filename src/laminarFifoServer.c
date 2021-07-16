@@ -8,7 +8,9 @@
 #include "timeHelpers.h"
 #include "testParams.h"
 
-void *fifo_server_thread(void* args){
+#include "avxMemcpy.h"
+
+void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //https://clang.llvm.org/docs/AttributeReference.html#no-builtin
     laminar_fifo_threadArgs_t *args_cast = (laminar_fifo_threadArgs_t *)args;
 
     //==== Get Arguments ====
@@ -82,7 +84,7 @@ void *fifo_server_thread(void* args){
         { //Begin Scope for PartitionCrossingFIFO FIFO Write
             int PartitionCrossingFIFO_writeOffsetPtr_re_local = PartitionCrossingFIFO_writeOffsetCached_re;
             //Write into array
-            __builtin_memcpy_inline(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_writeOffsetPtr_re_local, &PartitionCrossingFIFO_writeTmp, sizeof(PartitionCrossingFIFO_t));
+            avxMemcpy(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_writeOffsetPtr_re_local, &PartitionCrossingFIFO_writeTmp, sizeof(PartitionCrossingFIFO_t));
             if (PartitionCrossingFIFO_writeOffsetPtr_re_local >= FIFO_LEN_BLKS)
             {
                 PartitionCrossingFIFO_writeOffsetPtr_re_local = 0;

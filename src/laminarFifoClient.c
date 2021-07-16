@@ -8,7 +8,9 @@
 #include "timeHelpers.h"
 #include "testParams.h"
 
-void *fifo_client_thread(void* args){
+#include "avxMemcpy.h"
+
+void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //https://clang.llvm.org/docs/AttributeReference.html#no-builtin
     laminar_fifo_threadArgs_t *args_cast = (laminar_fifo_threadArgs_t *)args;
 
     //==== Get Arguments ====
@@ -76,7 +78,7 @@ void *fifo_client_thread(void* args){
             }
 
             //Read from array
-            __builtin_memcpy_inline(&PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
+            avxMemcpy(&PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
             PartitionCrossingFIFO_readOffsetCached_re = PartitionCrossingFIFO_readOffsetPtr_re_local;
             //Update Read Ptr
             atomic_store_explicit(PartitionCrossingFIFO_readOffsetPtr_re, PartitionCrossingFIFO_readOffsetPtr_re_local, memory_order_release);
