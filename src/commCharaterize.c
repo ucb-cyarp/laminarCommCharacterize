@@ -60,39 +60,46 @@ char* genReportName(const char* reportPrefix, const char* reportSuffix){
 
 /**
  * Single pair of cores in an L3 paired up
+ * 
+ * Trying different parings of zero core to other cores (indevidual runs) to see if rate is consistent across paired cores
  */
 void runIntraL3SingleFifo(char* reportPrefix, int l3){
     static_assert(CORES_PER_L3>1, "Intra-L3 Test Requires >1 Core Per L3");
     assert(l3>=0 && l3<L3_S);
     printf("=== IntraL3SingleFifo ===\n");
 
-    char reportNameSuffix[80];
-    snprintf(reportNameSuffix, 80, "_intraL3_singleFifo_L3-%d_L3CPUA-%d_L3CPUB-%d.csv", l3, 0, i);
-    char* reportName = genReportName(reportPrefix, reportNameSuffix);
-    
-    int serverCPUs[1] = {CORE_MAP[l3][0]};
-    int clientCPUs[1] = {CORE_MAP[l3][1]};
-    runLaminarFifoBench(serverCPUs, clientCPUs, 1, reportName);
-    free(reportName);
+    for(int i = 1; i<CORES_PER_L3; i++){
+        char reportNameSuffix[80];
+        snprintf(reportNameSuffix, 80, "_intraL3_singleFifo_L3-%d_L3CPUA-%d_L3CPUB-%d.csv", l3, 0, i);
+        char* reportName = genReportName(reportPrefix, reportNameSuffix);
+        
+        int serverCPUs[1] = {CORE_MAP[l3][0]};
+        int clientCPUs[1] = {CORE_MAP[l3][i]};
+        runLaminarFifoBench(serverCPUs, clientCPUs, 1, reportName);
+        free(reportName);
+    }
 }
 
 /**
  * Single pair of cores in different L3s paired up
+ * 
+ * Trying different parings of zero cores in different L3s (indevidual runs) to see if rate is consistent across paired L3s
  */
-void runInterL3SingleFifo(char* reportPrefix, int l3a, int l3b){
+void runInterL3SingleFifo(char* reportPrefix, int startL3){
     static_assert(START_L3+1<L3_S, "Inter-L3 Test Requires >1 L3s to be Tested");
-    assert(l3a>=0 && l3a<L3_S);
-    assert(l3b>=0 && l3b<L3_S);
+    assert(startL3>=0 && startL3<L3_S);
     printf("=== InterL3SingleFifo ===\n");
 
-    char reportNameSuffix[80];
-    snprintf(reportNameSuffix, 80, "_interL3_singleFifo_L3A-%d_L3B-%d.csv", l3a, l3b);
-    char* reportName = genReportName(reportPrefix, reportNameSuffix);
+    for(int i = 1; i<L3_S-START_L3; i++){
+        char reportNameSuffix[80];
+        snprintf(reportNameSuffix, 80, "_interL3_singleFifo_L3A-%d_L3B-%d.csv", startL3, startL3+i);
+        char* reportName = genReportName(reportPrefix, reportNameSuffix);
 
-    int serverCPUs[1] = {CORE_MAP[l3a][0]};
-    int clientCPUs[1] = {CORE_MAP[l3b][0]};
-    runLaminarFifoBench(serverCPUs, clientCPUs, 1, reportName);
-    free(reportName);
+        int serverCPUs[1] = {CORE_MAP[startL3][0]};
+        int clientCPUs[1] = {CORE_MAP[startL3+i][0]};
+        runLaminarFifoBench(serverCPUs, clientCPUs, 1, reportName);
+        free(reportName);
+    }
 }
 
 /**
@@ -248,7 +255,7 @@ int main(int argc, char *argv[]){
     static_assert(START_L3<L3_S, "START_L3 must be < L3_S");
 
     runIntraL3SingleFifo(filenamePrefix, START_L3);
-    runInterL3SingleFifo(filenamePrefix, START_L3, START_L3+1);
+    runInterL3SingleFifo(filenamePrefix, START_L3);
     runIntraL3SingleL3(filenamePrefix, START_L3);
     runIntraL3AllL3(filenamePrefix, START_L3);
     runInterL3SingleL3(filenamePrefix, START_L3, START_L3+1);
@@ -258,7 +265,7 @@ int main(int argc, char *argv[]){
     //Changing Phase of Pairing for AMD Zen2 to Determine if there is an advantage for communicating between CCXs on the same die (or do all inter-L3 transactions transit the IO die)
     //Also getting a second datapoint for intra-L3 communication
     runIntraL3SingleFifo(filenamePrefix, START_L3_SECONDARY);
-    runInterL3SingleFifo(filenamePrefix, START_L3_SECONDARY, START_L3_SECONDARY+1);
+    runInterL3SingleFifo(filenamePrefix, START_L3_SECONDARY);
     runIntraL3SingleL3(filenamePrefix, START_L3_SECONDARY);
     runIntraL3AllL3(filenamePrefix, START_L3_SECONDARY);
     runInterL3SingleL3(filenamePrefix, START_L3_SECONDARY, START_L3_SECONDARY+1);
