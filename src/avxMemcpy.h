@@ -13,8 +13,8 @@
     int fp64Copies = bytes/8;\
     bytes -= fp64Copies*8;\
     \
-    double* dstDouble = (double*) dst;\
-    double* srcDouble = (double*) src;\
+    double* dstDouble = (double*) DST;\
+    double* srcDouble = (double*) SRC;\
     for(int i = 0; i<avx256Copies; i++){\
         __m256d ldVal =  _mm256_loadu_pd(srcDouble);\
         _mm256_storeu_pd (dstDouble, ldVal);\
