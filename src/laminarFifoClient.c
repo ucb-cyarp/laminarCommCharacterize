@@ -25,7 +25,9 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
     int8_t PartitionCrossingFIFO_readOffsetCached_re;
     PartitionCrossingFIFO_writeOffsetCached_re = atomic_load_explicit(PartitionCrossingFIFO_writeOffsetPtr_re, memory_order_acquire);
     PartitionCrossingFIFO_readOffsetCached_re = atomic_load_explicit(PartitionCrossingFIFO_readOffsetPtr_re, memory_order_acquire);
-    PartitionCrossingFIFO_t PartitionCrossingFIFO_N2_TO_1_0_readTmp;
+    //Make sure this is aligned to 32 bytes (256 bits).  My hope was that PartitionCrossingFIFO_t would be aligned to its size (1024 bytes which would be aligned to 32 bytes too)
+    //However, based on printing the address, it looks like this is not nessisarily true
+    PartitionCrossingFIFO_t *PartitionCrossingFIFO_N2_TO_1_0_readTmp = aligned_alloc(VITIS_MEM_ALIGNMENT, sizeof(PartitionCrossingFIFO_t));
 
     //==== Signal Ready ====
     atomic_thread_fence(memory_order_acquire);
@@ -78,7 +80,7 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
             }
 
             //Read from array
-            avxMemcpy(&PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
+            avxMemcpy(PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
             PartitionCrossingFIFO_readOffsetCached_re = PartitionCrossingFIFO_readOffsetPtr_re_local;
             //Update Read Ptr
             atomic_store_explicit(PartitionCrossingFIFO_readOffsetPtr_re, PartitionCrossingFIFO_readOffsetPtr_re_local, memory_order_release);
@@ -87,7 +89,7 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
         //Need to make sure that the memory copy is not optimized out if the content is not checked
         asm volatile(""
         :
-        : "rm" (PartitionCrossingFIFO_N2_TO_1_0_readTmp)
+        : "rm" (*PartitionCrossingFIFO_N2_TO_1_0_readTmp)
         :);
     }
 
