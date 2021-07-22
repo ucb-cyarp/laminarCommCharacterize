@@ -23,14 +23,14 @@ void *fifo_server_thread(void* args){
     int8_t PartitionCrossingFIFO_readOffsetCached_re;
     PartitionCrossingFIFO_writeOffsetCached_re = atomic_load_explicit(PartitionCrossingFIFO_writeOffsetPtr_re, memory_order_acquire);
     PartitionCrossingFIFO_readOffsetCached_re = atomic_load_explicit(PartitionCrossingFIFO_readOffsetPtr_re, memory_order_acquire);
-    PartitionCrossingFIFO_t PartitionCrossingFIFO_writeTmp;
+    PartitionCrossingFIFO_t *PartitionCrossingFIFO_writeTmp = aligned_alloc(VITIS_MEM_ALIGNMENT, sizeof(PartitionCrossingFIFO_t));
 
     //==== Init write temp ====
     for(int i = 0; i<FIFO_BLK_SIZE_CPLX_FLOAT; i++){
-        PartitionCrossingFIFO_writeTmp.port0_real[i] = 0;
+        PartitionCrossingFIFO_writeTmp->port0_real[i] = 0;
     }
     for(int i = 0; i<FIFO_BLK_SIZE_CPLX_FLOAT; i++){
-        PartitionCrossingFIFO_writeTmp.port0_imag[i] = 0;
+        PartitionCrossingFIFO_writeTmp->port0_imag[i] = 0;
     }
 
     //==== Signal Ready ====
@@ -56,7 +56,7 @@ void *fifo_server_thread(void* args){
 
         //Try to make sure the copy is not optimized out by signalling to compiler that the write tmp is modified.  It is not actually modified
         asm volatile(""
-        : "=rm" (PartitionCrossingFIFO_writeTmp)
+        : "=rm" (*PartitionCrossingFIFO_writeTmp)
         : 
         :);
 
@@ -82,7 +82,7 @@ void *fifo_server_thread(void* args){
         { //Begin Scope for PartitionCrossingFIFO FIFO Write
             int PartitionCrossingFIFO_writeOffsetPtr_re_local = PartitionCrossingFIFO_writeOffsetCached_re;
             //Write into array
-            __builtin_memcpy_inline(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_writeOffsetPtr_re_local, &PartitionCrossingFIFO_writeTmp, sizeof(PartitionCrossingFIFO_t));
+            __builtin_memcpy_inline(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_writeOffsetPtr_re_local, PartitionCrossingFIFO_writeTmp, sizeof(PartitionCrossingFIFO_t));
             if (PartitionCrossingFIFO_writeOffsetPtr_re_local >= FIFO_LEN_BLKS)
             {
                 PartitionCrossingFIFO_writeOffsetPtr_re_local = 0;
@@ -101,6 +101,8 @@ void *fifo_server_thread(void* args){
     asm volatile("" ::: "memory"); //Stop Re-ordering of timer
     clock_gettime(CLOCK_MONOTONIC, &stopTime);
     asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+
+    free(PartitionCrossingFIFO_writeTmp);
 
     //Return results
     double* duration = malloc(sizeof(double));

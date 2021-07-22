@@ -23,7 +23,7 @@ void *fifo_client_thread(void* args){
     int8_t PartitionCrossingFIFO_readOffsetCached_re;
     PartitionCrossingFIFO_writeOffsetCached_re = atomic_load_explicit(PartitionCrossingFIFO_writeOffsetPtr_re, memory_order_acquire);
     PartitionCrossingFIFO_readOffsetCached_re = atomic_load_explicit(PartitionCrossingFIFO_readOffsetPtr_re, memory_order_acquire);
-    PartitionCrossingFIFO_t PartitionCrossingFIFO_N2_TO_1_0_readTmp;
+    PartitionCrossingFIFO_t *PartitionCrossingFIFO_N2_TO_1_0_readTmp = aligned_alloc(VITIS_MEM_ALIGNMENT, sizeof(PartitionCrossingFIFO_t));;
 
     //==== Signal Ready ====
     atomic_thread_fence(memory_order_acquire);
@@ -76,7 +76,7 @@ void *fifo_client_thread(void* args){
             }
 
             //Read from array
-            __builtin_memcpy_inline(&PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
+            __builtin_memcpy_inline(PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
             PartitionCrossingFIFO_readOffsetCached_re = PartitionCrossingFIFO_readOffsetPtr_re_local;
             //Update Read Ptr
             atomic_store_explicit(PartitionCrossingFIFO_readOffsetPtr_re, PartitionCrossingFIFO_readOffsetPtr_re_local, memory_order_release);
@@ -85,7 +85,7 @@ void *fifo_client_thread(void* args){
         //Need to make sure that the memory copy is not optimized out if the content is not checked
         asm volatile(""
         :
-        : "rm" (PartitionCrossingFIFO_N2_TO_1_0_readTmp)
+        : "rm" (*PartitionCrossingFIFO_N2_TO_1_0_readTmp)
         :);
     }
 
@@ -93,6 +93,8 @@ void *fifo_client_thread(void* args){
     asm volatile("" ::: "memory"); //Stop Re-ordering of timer
     clock_gettime(CLOCK_MONOTONIC, &stopTime);
     asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+
+    free(PartitionCrossingFIFO_N2_TO_1_0_readTmp);
 
     //Return results
     double* duration = malloc(sizeof(double));
