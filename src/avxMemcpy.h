@@ -19,12 +19,12 @@
     double* dstDouble = (double*) dst;\
     double* srcDouble = (double*) src;\
     for(int i = 0; i<avx256Copies; i++){\
-        __m256d ldVal =  _mm256_loadu_pd(srcDouble+i*4);\
-        _mm256_storeu_pd (dstDouble+i*4, ldVal);\
+        __m256d ldVal =  _mm256_load_pd(srcDouble+i*4);\
+        _mm256_store_pd (dstDouble+i*4, ldVal);\
     }\
     for(int i = 0; i<avx128Copies; i++){\
-        __m128d ldVal =  _mm_loadu_pd(srcDouble+avx256Copies*4+i*2);\
-        _mm_storeu_pd (dstDouble+avx256Copies*4+i*2, ldVal);\
+        __m128d ldVal =  _mm_load_pd(srcDouble+avx256Copies*4+i*2);\
+        _mm_store_pd (dstDouble+avx256Copies*4+i*2, ldVal);\
     }\
     for(int i = 0; i<fp64Copies; i++){\
         double ldVal = srcDouble[avx256Copies*4+avx128Copies*2+i];\
