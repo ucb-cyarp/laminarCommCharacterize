@@ -98,6 +98,8 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
     clock_gettime(CLOCK_MONOTONIC, &stopTime);
     asm volatile("" ::: "memory"); //Stop Re-ordering of timer
 
+    free(PartitionCrossingFIFO_N2_TO_1_0_readTmp);
+
     //Return results
     double* duration = malloc(sizeof(double));
     *duration = difftimespec(&stopTime, &startTime);
