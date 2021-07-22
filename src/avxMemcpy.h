@@ -13,8 +13,8 @@
     int fp64Copies = bytes/8;\
     bytes -= fp64Copies*8;\
     \
-    char* dst = (char*) DST;\
-    char* src = (char*) SRC;\
+    char* dst = (char*) (DST);\
+    char* src = (char*) (SRC);\
     \
     double* dstDouble = (double*) dst;\
     double* srcDouble = (double*) src;\
