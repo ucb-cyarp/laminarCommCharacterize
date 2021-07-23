@@ -118,11 +118,17 @@ def loadResults(inputDir: str) -> typing.List[TestResult]:
 
     return results
 
-def plotResults(results: typing.List[TestResult], ylim, title: str, outputPrefix: str):
-
+def plotResults(results: typing.List[TestResult], ylim, title: str, outputPrefix: str, avgLines: bool):
     bars = []
     barLbls = []
     barLblXPos = []
+    lines = []
+    lineLbls = []
+    averages = []
+    centerXPos = [] #The center of the bars in the grouped series
+    colors = []
+
+    cmap = plt.get_cmap('tab10')
 
     width = 1
 
@@ -130,7 +136,7 @@ def plotResults(results: typing.List[TestResult], ylim, title: str, outputPrefix
     fig, ax = plt.subplots()
 
     currentLblOffset = 0
-    for result in results:
+    for (i, result) in enumerate(results):
         #Get Lbls
         currentLbls = result.result['label'].to_list()
         xPos = np.arange(currentLblOffset, currentLblOffset+len(currentLbls)) * width
@@ -138,16 +144,36 @@ def plotResults(results: typing.List[TestResult], ylim, title: str, outputPrefix
         currentLblOffset += len(currentLbls)+1
         barLbls.extend(currentLbls)
 
-        currentBar = ax.bar(xPos, result.result['ServerGbps'], width, label=result.name)
+        color = cmap(i)
+        currentBar = ax.bar(xPos, result.result['ServerGbps'], width, label=result.name, color=color)
+        averages.append(result.result['ServerGbps'].mean())
         bars.append(currentBar)
+        colors.append(color)
+        centerXPos.append(xPos.mean())
+
+    currentXlim = ax.get_xlim() #Need this if adding avg lines
+
+    if avgLines:
+    #plotting avg line
+        xmin = currentXlim[0]
+        xmax = currentXlim[1]
+        for (color, avg, centerXPos) in zip(colors, averages, centerXPos):
+            #plot line
+            currentLine = ax.hlines(y=avg, xmin=xmin, xmax=xmax, linestyles='--', color=color, linewidth=1)
+            lines.append(currentLine)
+
+            #plot lbl
+            currentLbl = ax.text(s=f'{avg:.1f}', x=centerXPos, y=avg, ha='center', va='center', color='k', fontsize='8', bbox={'boxstyle': 'Square, pad=0.1', 'edgecolor': 'None', 'facecolor': (1, 1, 1, 0.75)})
+            lineLbls.append(currentLbl)
 
     if ylim:
         plt.ylim(ylim)
     ax.set_ylabel('Rate (Gbps)')
     ax.set_title(title)
     ax.set_xticks(barLblXPos)
-    ax.set_xticklabels(barLbls, rotation='vertical', fontsize=4)
+    ax.set_xticklabels(barLbls, rotation='vertical', fontsize=2)
     ax.legend(fontsize=8)
+    ax.set_xlim(currentXlim) #Need to reset xlim after these extra plot functions, otherwise the horiz lines are left floating (horiz margin)
 
     fig.tight_layout()
     
@@ -161,6 +187,7 @@ def setup():
     parser.add_argument('--output-file-prefix', type=str, required=False, help='If supplied, plots will be written to files with this given prefix')
     parser.add_argument('--ylim', required=False, type=float, nargs=2, help='The y limits (low, high).  If supplied, overrides the automatic y limit')
     parser.add_argument('--title', required=False, type=str, help='Title for the graphs.  If not supplied, the project name will be used')
+    parser.add_argument('--avg-lines', required=False, action='store_true', help='Plot average lines for the different tests')
 
     args = parser.parse_args()
 
@@ -174,7 +201,7 @@ def setup():
     #Print the CLI options for debugging
     print('Input Dir: ' + inputDir)
 
-    RtnType = collections.namedtuple('SetupRtn', ['inputDir', 'outputFileDir', 'yLim', 'title'])
+    RtnType = collections.namedtuple('SetupRtn', ['inputDir', 'outputFileDir', 'yLim', 'title', 'avgLines'])
 
     yLim = args.ylim
 
@@ -186,7 +213,7 @@ def setup():
     if title is None:
         title = 'Laiminar Comm Characterize Results'
 
-    rtn_val = RtnType(inputDir=inputDir, outputFileDir=outputFileDir, yLim=yLim, title=title)
+    rtn_val = RtnType(inputDir=inputDir, outputFileDir=outputFileDir, yLim=yLim, title=title, avgLines=args.avg_lines)
     return rtn_val
 
 
@@ -194,7 +221,7 @@ def main():
     setup_rtn = setup()
 
     results = loadResults(setup_rtn.inputDir)
-    plotResults(results, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir)
+    plotResults(results, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir, setup_rtn.avgLines)
 
 if __name__ == '__main__':
     main()

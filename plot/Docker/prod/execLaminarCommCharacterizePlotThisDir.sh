@@ -29,6 +29,6 @@ user=$(whoami)
 #Get the actual command to run
 cmd="${@:1}"
 
-echo "docker run --rm --name LaminarCommCharacterizePlotExec -a stdin -a stdout -it -v \"$srcDir\":/working: laminar_comm_characterize_plot:1.0 bash -c \"useradd -d $homeDir $user; sudo -H -u $user bash -c \"cd /working; python3 /srv/plot/src/PlotLaminarChar.py --input-dir . --output-file-prefix ./rpt\"\""
+echo "docker run --rm --name LaminarCommCharacterizePlotExec -a stdin -a stdout -it -v \"$srcDir\":/working: laminar_comm_characterize_plot:1.0 bash -c \"useradd -d $homeDir $user; sudo -H -u $user bash -c \"cd /working; python3 /srv/plot/src/PlotLaminarChar.py --input-dir . --output-file-prefix ./rpt ${cmd}; python3 /srv/plot/src/PlotLaminarChar.py --input-dir . --output-file-prefix ./rpt_lbl --avg-lines ${cmd}\"\""
 
-docker run --rm --name LaminarCommCharacterizePlotExec -a stdin -a stdout -it -v "$srcDir":/working: laminar_comm_characterize_plot:1.0 bash -c "useradd -d $homeDir $user; sudo -H -u $user bash -c \"cd /working; python3 /srv/plot/src/PlotLaminarChar.py --input-dir . --output-file-prefix ./rpt\""
+docker run --rm --name LaminarCommCharacterizePlotExec -a stdin -a stdout -it -v "$srcDir":/working: laminar_comm_characterize_plot:1.0 bash -c "useradd -d $homeDir $user; sudo -H -u $user bash -c \"cd /working; python3 /srv/plot/src/PlotLaminarChar.py --input-dir . --output-file-prefix ./rpt ${cmd}; python3 /srv/plot/src/PlotLaminarChar.py --input-dir . --output-file-prefix ./rpt_lbl --avg-lines ${cmd}\""
