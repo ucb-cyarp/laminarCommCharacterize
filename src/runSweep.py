@@ -41,7 +41,7 @@ def main():
         blockTransactions = math.ceil(TARGET_BYTES/float(blkSizeBytes))
         bytesSent = blockTransactions*blkSizeBytes
 
-        rptDir = os.path.join('name', f'blkSizeBytes{blkSizeBytes:d}')
+        rptDir = os.path.join(name, f'blkSizeBytes{blkSizeBytes:d}')
         rptPrefix = os.path.join(rptDir, 'report') #'report' is the prefix of the report filenames.  It can be changed
 
         slackStatusPost(f'*Laminar FIFO Characterize Starting*\nBlock Size: {blkSizeBytes:d}\nBlock Transactions: {blockTransactions:d}\nBytes Sent: {bytesSent:d}\nHost: {hostname}\nTime: {cur_time}')
