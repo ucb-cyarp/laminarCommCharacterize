@@ -13,11 +13,11 @@ import math
 from slackUtils import *
 
 #TODO: Make params?.  Would need to make params in outer script which loads the slack URL
-TARGET_BYTES: typing.Final[int] = 1000000000
-UNIT_SIZE: typing.Final[int] = 4*2 #Complex floats (8 bytes) are the unit described in the FIFO structure
-BLK_SIZE_START: typing.Final[int] = 1 #These are in UNIT_SIZE
-BLK_SIZE_END: typing.Final[int] = 513 #These are in UNIT_SIZE
-BLK_SIZE_STEP: typing.Final[int] = 1 #These are in UNIT_SIZE
+TARGET_BYTES: int = 1000000000
+UNIT_SIZE: int = 4*2 #Complex floats (8 bytes) are the unit described in the FIFO structure
+BLK_SIZE_START: int = 1 #These are in UNIT_SIZE
+BLK_SIZE_END: int = 513 #These are in UNIT_SIZE
+BLK_SIZE_STEP: int = 1 #These are in UNIT_SIZE
 
 def main():
     #Parse CLI Arguments for Config File Location
