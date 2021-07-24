@@ -19,6 +19,8 @@ BLK_SIZE_START: int = 1 #These are in UNIT_SIZE
 BLK_SIZE_END: int = 513 #These are in UNIT_SIZE
 BLK_SIZE_STEP: int = 1 #These are in UNIT_SIZE
 
+SLACK_RPT_PERIOD = 50
+
 def main():
     #Parse CLI Arguments for Config File Location
     parser = argparse.ArgumentParser(description='Runs a sweep of the Laminar Comm Characterize test')
@@ -35,7 +37,7 @@ def main():
 
     blkSizes = range(BLK_SIZE_START, BLK_SIZE_END, BLK_SIZE_STEP)
 
-    for blkSize in blkSizes:
+    for (i, blkSize) in enumerate(blkSizes):
         cur_time = datetime.datetime.now()
         blkSizeBytes = blkSize*UNIT_SIZE
         blockTransactions = math.ceil(TARGET_BYTES/float(blkSizeBytes))
@@ -44,7 +46,8 @@ def main():
         rptDir = os.path.join(name, f'blkSizeBytes{blkSizeBytes:d}')
         rptPrefix = os.path.join(rptDir, 'report') #'report' is the prefix of the report filenames.  It can be changed
 
-        slackStatusPost(f'*Laminar FIFO Characterize Starting*\nBlock Size: {blkSizeBytes:d}\nBlock Transactions: {blockTransactions:d}\nBytes Sent: {bytesSent:d}\nHost: {hostname}\nTime: {cur_time}')
+        if i % SLACK_RPT_PERIOD == 0:
+            slackStatusPost(f'*Laminar FIFO Characterize Starting*\nBlock Size: {blkSizeBytes:d}\nBlock Transactions: {blockTransactions:d}\nBytes Sent: {bytesSent:d}\nHost: {hostname}\nTime: {cur_time}')
 
         #Build new version
         cmd = f'FIFO_BLK_SIZE_CPLX_FLOAT={blkSize:d} TRANSACTIONS_BLKS={blockTransactions:d} ./build.sh'
