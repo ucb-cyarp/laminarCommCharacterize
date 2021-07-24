@@ -52,6 +52,7 @@ def main():
         rtn = subprocess.call(cmd, shell=True, executable='/bin/bash')
         if rtn != 0:
             slackStatusPost(f'*Laminar FIFO Characterize Failed:x:*\nCMD: {cmd}\nRtnCode: {rtn}\nHost: {hostname}\nTime: {cur_time}')
+            raise RuntimeError(f'Laminar FIFO Characterize Failed - CMD: {cmd} RtnCode: {rtn}')
 
         #Run the test
         os.mkdir(rptDir)
@@ -60,6 +61,7 @@ def main():
         rtn = subprocess.call(cmd, shell=True, executable='/bin/bash')
         if rtn != 0:
             slackStatusPost(f'*Laminar FIFO Characterize Failed:x:*\nCMD: {cmd}\nRtnCode: {rtn}\nHost: {hostname}\nTime: {cur_time}')
+            raise RuntimeError(f'Laminar FIFO Characterize Failed - CMD: {cmd} RtnCode: {rtn}')
 
         #Collect the build artifacts
         cmd = f'./collectResults.sh {rptDir}'
@@ -67,6 +69,7 @@ def main():
         rtn = subprocess.call(cmd, shell=True, executable='/bin/bash')
         if rtn != 0:
             slackStatusPost(f'*Laminar FIFO Characterize Failed:x:*\nCMD: {cmd}\nRtnCode: {rtn}\nHost: {hostname}\nTime: {cur_time}')
+            raise RuntimeError(f'Laminar FIFO Characterize Failed - CMD: {cmd} RtnCode: {rtn}')
 
     slackStatusPost('*Laminar FIFO Characterize Finishing :white_check_mark:*\nHost: ' + hostname + '\n' + 'Time: ' + str(cur_time))
 
