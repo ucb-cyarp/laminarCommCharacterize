@@ -62,7 +62,7 @@ def plotResults(results: typing.Dict[str, TestResult], ylim, title: str, outputP
             lineLbls.append(currentLbl)
 
     if ylim:
-        plt.ylim(ylim)
+        ax.set_ylim(ylim)
     ax.set_ylabel('Rate (Gbps)')
     ax.set_title(title)
     ax.set_xticks(barLblXPos)

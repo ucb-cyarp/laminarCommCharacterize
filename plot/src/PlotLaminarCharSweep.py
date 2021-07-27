@@ -17,6 +17,7 @@ from PlotLaminarCommon.PlotLaminarCommon import *
 SweepRtnType = collections.namedtuple('Sweep', ['blockSizesBytes', 'results'])
 
 pointAlpha = 0.1
+avgLineWidth = 1
 
 def setup():
     #Parse CLI Arguments for Config File Location
@@ -130,26 +131,109 @@ def plotSweep(results: SweepRtnType, ylim, title: str, outputPrefix: str, plotPt
         avgGbps = [getServerAvgRate(resultPt[testName]) for resultPt in sweepResults]
         tbl[testName] = avgGbps
         
-        currentLine = ax.plot(blkSizesBytes, avgGbps, label=testName, color=color)
+        currentLine = ax.plot(blkSizesBytes, avgGbps, label=testName, color=color, linewidth=avgLineWidth)
         lines.append(currentLine)
         colors.append(color)
 
     if ylim:
-        plt.ylim(ylim)
+        ax.set_ylim(ylim)
     ax.set_ylabel('Rate (Gbps)')
     ax.set_xlabel('Block Size (bytes)')
     ax.set_title(title)
     ax.legend(fontsize=8)
 
-    fig.tight_layout()
+    # fig.tight_layout()
 
     suffix = '_comm_sweep'
     if plotPts:
         suffix += '_pts'
     
     if outputPrefix:
-        plt.savefig(outputPrefix+suffix+'.pdf', format='pdf')
+        fig.savefig(outputPrefix+suffix+'.pdf', format='pdf')
         tbl.to_csv(outputPrefix+suffix+'.csv', index=False)
+
+def plotSweepPtsSeperatePlots(results: SweepRtnType, ylim, title: str, outputPrefix: str):
+    blkSizesBytes = results.blockSizesBytes #ordered list
+    sweepResults = results.results #ordered list corresponding to blkSizesBytes
+
+    #Modified from numpy example https://matplotlib.org/stable/gallery/lines_bars_and_markers/barchart.html
+    figs = []
+    axs = []
+
+    lines = []
+    scatter = []
+    colors = []
+
+    yLimMin = None
+    yLimMax = None
+
+    cmap = plt.get_cmap('tab10')
+
+    #Also make a dataframe to export to a CSV file for easy analysis
+    tbl = pd.DataFrame()
+    tbl['blkSizeBytes'] = blkSizesBytes
+
+    #Plot Points First
+    for (i, testName) in enumerate(REPORTS): #Use the order in REPORTS (via a generator)
+        fig, ax = plt.subplots()
+
+        color = cmap(i)
+
+        pointXPos = np.empty(shape=(0))
+        pointYPos = np.empty(shape=(0))
+
+        #Plot the raw points in the collected test runs.  Each point is typically the rate expereienced by a given FIFO
+        for idx, resultPt in enumerate(sweepResults):
+            yVals = resultPt[testName].result['ServerGbps'].to_numpy()
+            xVals = np.full(yVals.shape, blkSizesBytes[idx]) #The x value (block size) of all of these points is the same
+
+            pointXPos = np.append(pointXPos, xVals)
+            pointYPos = np.append(pointYPos, yVals)
+
+        currentScatter = ax.scatter(pointXPos, pointYPos, color=color, label=testName, alpha=pointAlpha,  linewidths=0)
+        scatter.append(currentScatter)
+
+        #Plot the Average Line
+        avgGbps = [getServerAvgRate(resultPt[testName]) for resultPt in sweepResults]
+        tbl[testName] = avgGbps
+        
+        currentLine = ax.plot(blkSizesBytes, avgGbps, label=testName+' - Harmonic Avg.', color=(0, 0, 0, 1), linewidth=avgLineWidth) #For seperate plots, plot the average line in black
+        lines.append(currentLine)
+        colors.append(color)
+
+        ax.set_ylabel('Rate (Gbps)')
+        ax.set_xlabel('Block Size (bytes)')
+        ax.set_title(title)
+        ax.legend(fontsize=8)
+
+        # fig.tight_layout()
+
+        if ylim:
+            ax.set_ylim(ylim)
+        else:
+            yLims = ax.get_ylim()
+            if yLimMin is None:
+                yLimMin = yLims[0]
+            else:
+                yLimMin = min(yLimMin, yLims[0])
+
+            if yLimMax is None:
+                yLimMax = yLims[1]
+            else:
+                yLimMax = max(yLimMax, yLims[1])
+
+        figs.append(fig)
+        axs.append(ax)
+
+    #Set the y limits of the subplots to all be the same (if ylim provided, it is set earlier)
+    if not ylim:    
+        for ax in axs:
+            ax.set_ylim(yLimMin, yLimMax)
+
+    if outputPrefix:
+        for i, fig in enumerate(figs):
+            suffix = '_comm_sweep_pts' + '_subplt'+str(i)
+            fig.savefig(outputPrefix+suffix+'.pdf', format='pdf')
 
 def main():
     setup_rtn = setup()
@@ -160,6 +244,7 @@ def main():
     if setup_rtn.plotPts:
         #Also plot the version with just averages
         plotSweep(sweep, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir, False)
+        plotSweepPtsSeperatePlots(sweep, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir)
 
 if __name__ == '__main__':
     main()
