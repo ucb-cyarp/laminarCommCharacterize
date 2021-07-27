@@ -89,10 +89,10 @@ def importReport(rptFiles: typing.List[str], filenameRegex: str, lblFormat: str,
                 reportPart = pd.read_csv(file)
 
                 #Compute Server Rate
-                reportPart['ServerGbps'] = reportPart[REPORT_FEILD_NAMES.bytesTx] / reportPart[REPORT_FEILD_NAMES.serverTime] * 8 / 1.0e9
+                reportPart['ServerGbps'] = (reportPart[REPORT_FEILD_NAMES.bytesTx] / reportPart[REPORT_FEILD_NAMES.serverTime]) * 8 / 1.0e9
 
                 #Compute Client Rate
-                reportPart['ClientGbps'] = reportPart[REPORT_FEILD_NAMES.bytesRx] / reportPart[REPORT_FEILD_NAMES.clientTime] * 8 / 1.0e9
+                reportPart['ClientGbps'] = (reportPart[REPORT_FEILD_NAMES.bytesRx] / reportPart[REPORT_FEILD_NAMES.clientTime]) * 8 / 1.0e9
 
                 #Set entry name
                 lblFun = lblFunFactory(lblFormat, matchFromFilename, argsFromFilename, argsFromRpt)
@@ -126,7 +126,7 @@ def loadResults(inputDir: str) -> typing.Dict[str, TestResult]:
 # Is equivalent to the harmonic mean of the rates
 #Returns rate in Gbps
 def getServerAvgRate(result: TestResult):
-    return result.result[REPORT_FEILD_NAMES.bytesTx].sum()/result.result[REPORT_FEILD_NAMES.serverTime].sum()*8/1.0e9
+    return (result.result[REPORT_FEILD_NAMES.bytesTx].sum()/result.result[REPORT_FEILD_NAMES.serverTime].sum())*8/1.0e9
 
 def getServerMinRate(result: TestResult):
     return result.result['ServerGbps'].min()

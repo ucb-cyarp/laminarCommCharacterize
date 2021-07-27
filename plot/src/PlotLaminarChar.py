@@ -41,7 +41,8 @@ def plotResults(results: typing.Dict[str, TestResult], ylim, title: str, outputP
 
         color = cmap(i)
         currentBar = ax.bar(xPos, result.result['ServerGbps'], width, label=result.name, color=color)
-        averages.append(result.result[REPORT_FEILD_NAMES.bytesTx].sum()/result.result[REPORT_FEILD_NAMES.serverTime].sum()*8/1.0e9) #Convert from bytes/sec to Gbps
+
+        averages.append(getServerAvgRate(result)) #Convert from bytes/sec to Gbps
         bars.append(currentBar)
         colors.append(color)
         centerXPos.append(xPos.mean())
