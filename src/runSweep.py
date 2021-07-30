@@ -54,7 +54,7 @@ def main():
 
         #Build new version
         fifoTestEn = '1' if RUN_FIFO_TESTS else '0'
-        memTestEn = '1' if RUN_FIFO_TESTS else '0'
+        memTestEn = '1' if RUN_MEM_TESTS else '0'
         cmd = f'FIFO_BLK_SIZE_CPLX_FLOAT={blkSize:d} TRANSACTIONS_BLKS={blockTransactions:d} FIFO_TESTS={fifoTestEn} MEM_TESTS={memTestEn} ./build.sh'
         print('\nRunning: {}\n'.format(cmd))
         rtn = subprocess.call(cmd, shell=True, executable='/bin/bash')
