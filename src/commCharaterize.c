@@ -323,6 +323,33 @@ void runMultipleMemoryReaderAllL3(char* reportPrefix, int startL3){
 }
 
 /**
+ * All cores starting with startL3 for the specified number of L3s
+ */
+void runMultipleMemoryReaderMultipleL3(char* reportPrefix, int startL3, int numL3){
+    printf("=== MultipleMemoryReaderMultipleL3 ===\n");
+
+    char reportNameSuffix[80];
+    snprintf(reportNameSuffix, 80, "_multipleMemoryReader_startL3-%d_numL3-%d.csv", startL3, numL3);
+    char* reportName = genReportName(reportPrefix, reportNameSuffix);
+
+    int numCoresPer = CORES_PER_L3;
+    int numL3s = numL3;
+    int numCores = numCoresPer*numL3s;
+    int cpus[numCores];
+
+    for(int l3 = 0; l3<numL3s; l3++){
+        for(int l3Core = 0; l3Core<numCoresPer; l3Core++){
+            int ind = l3*numCoresPer+l3Core;
+            cpus[ind] = CORE_MAP[startL3+l3][l3Core];
+        }
+    }
+
+    runMemoryBench(cpus, numCores, reportName, memory_reader_thread);
+
+    free(reportName);
+}
+
+/**
  * Single core in an L3 
  * 
  * Trying different parings of zero core to other cores (indevidual runs) to see if rate is consistent across paired cores
@@ -389,6 +416,34 @@ void runMultipleMemoryWriterAllL3(char* reportPrefix, int startL3){
 
     free(reportName);
 }
+
+/**
+ * All cores starting with startL3 for the specified number of L3s
+ */
+void runMultipleMemoryWriterMultipleL3(char* reportPrefix, int startL3, int numL3){
+    printf("=== MultipleMemoryWriterMultipleL3 ===\n");
+
+    char reportNameSuffix[80];
+    snprintf(reportNameSuffix, 80, "_multipleMemoryWriter_startL3-%d_numL3-%d.csv", startL3, numL3);
+    char* reportName = genReportName(reportPrefix, reportNameSuffix);
+
+    int numCoresPer = CORES_PER_L3;
+    int numL3s = numL3;
+    int numCores = numCoresPer*numL3s;
+    int cpus[numCores];
+
+    for(int l3 = 0; l3<numL3s; l3++){
+        for(int l3Core = 0; l3Core<numCoresPer; l3Core++){
+            int ind = l3*numCoresPer+l3Core;
+            cpus[ind] = CORE_MAP[startL3+l3][l3Core];
+        }
+    }
+
+    runMemoryBench(cpus, numCores, reportName, memory_writer_thread);
+
+    free(reportName);
+}
+
 int main(int argc, char *argv[]){
     
     if(argc != 2){
@@ -427,7 +482,9 @@ int main(int argc, char *argv[]){
         runMultipleMemoryReaderSingleL3(filenamePrefix, START_L3);
         runMultipleMemoryReaderSingleL3(filenamePrefix, START_L3_SECONDARY);
         runMultipleMemoryReaderAllL3(filenamePrefix, START_L3);
-        runMultipleMemoryReaderAllL3(filenamePrefix, START_L3_SECONDARY); //This will possibly include another L3 since pairing is not used (like it is with FIFO testing)
+        // runMultipleMemoryReaderAllL3(filenamePrefix, START_L3_SECONDARY); //This will possibly include another L3 since pairing is not used (like it is with FIFO testing)
+        runMultipleMemoryReaderMultipleL3(filenamePrefix, START_L3, 2);
+        runMultipleMemoryReaderMultipleL3(filenamePrefix, START_L3_SECONDARY, 2);
 
         //Writing
         runSingleMemoryWriter(filenamePrefix, START_L3);
@@ -435,7 +492,9 @@ int main(int argc, char *argv[]){
         runMultipleMemoryWriterSingleL3(filenamePrefix, START_L3);
         runMultipleMemoryWriterSingleL3(filenamePrefix, START_L3_SECONDARY);
         runMultipleMemoryWriterAllL3(filenamePrefix, START_L3);
-        runMultipleMemoryWriterAllL3(filenamePrefix, START_L3_SECONDARY);
+        // runMultipleMemoryWriterAllL3(filenamePrefix, START_L3_SECONDARY);
+        runMultipleMemoryWriterMultipleL3(filenamePrefix, START_L3, 2);
+        runMultipleMemoryWriterMultipleL3(filenamePrefix, START_L3_SECONDARY, 2);
     #endif
 
     return 0;

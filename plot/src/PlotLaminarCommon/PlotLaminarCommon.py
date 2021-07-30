@@ -46,9 +46,11 @@ REPORTS: typing.Final[typing.List[str]] = [
     'Memory - Single Reader',
     'Memory - Multiple Readers Single L3',
     'Memory - Multiple Readers Multiple L3',
+    'Memory - Multiple Readers All L3',
     'Memory - Single Writer',
     'Memory - Multiple Writers Single L3',
-    'Memory - Multiple Writers Multiple L3'
+    'Memory - Multiple Writers Multiple L3',
+    'Memory - Multiple Writers All L3'
 ]
 
 class TestResultType(Enum):
@@ -158,11 +160,13 @@ def loadResults(inputDir: str) -> typing.Dict[str, TestResult]:
 
     loadResultHelper(results, 'Memory - Single Reader', dirFiles, '.*_singleMemoryReader_L3-([0-9]+)_L3CPU-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
     loadResultHelper(results, 'Memory - Multiple Readers Single L3', dirFiles, '.*_multipleMemoryReader_L3-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
-    loadResultHelper(results, 'Memory - Multiple Readers Multiple L3', dirFiles, '.*_multipleMemoryReader_startL3-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
+    loadResultHelper(results, 'Memory - Multiple Readers Multiple L3', dirFiles, '.*_multipleMemoryReader_startL3-([0-9]+)_numL3-([0-9]+).csv', 'L3:{0} NUM_L3:{1} CPU:{2}', [0, 1], ['CPU'], TestResultType.MEMORY)
+    loadResultHelper(results, 'Memory - Multiple Readers All L3', dirFiles, '.*_multipleMemoryReader_startL3-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
 
     loadResultHelper(results, 'Memory - Single Writer', dirFiles, '.*_singleMemoryWriter_L3-([0-9]+)_L3CPU-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
     loadResultHelper(results, 'Memory - Multiple Writers Single L3', dirFiles, '.*_multipleMemoryWriter_L3-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
-    loadResultHelper(results, 'Memory - Multiple Writers Multiple L3', dirFiles, '.*_multipleMemoryWriter_startL3-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
+    loadResultHelper(results, 'Memory - Multiple Writers Multiple L3', dirFiles, '.*_multipleMemoryWriter_startL3-([0-9]+)_numL3-([0-9]+).csv', 'L3:{0} NUM_L3:{1} CPU:{2}', [0, 1], ['CPU'], TestResultType.MEMORY)
+    loadResultHelper(results, 'Memory - Multiple Writers All L3', dirFiles, '.*_multipleMemoryWriter_startL3-([0-9]+).csv', 'L3:{0} CPU:{1}', [0], ['CPU'], TestResultType.MEMORY)
 
     return results
 
