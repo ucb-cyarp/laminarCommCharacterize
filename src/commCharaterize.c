@@ -421,18 +421,21 @@ int main(int argc, char *argv[]){
 
     //Run DRAM Tests
     #if MEM_TESTS != 0
+        //Reading
         runSingleMemoryReader(filenamePrefix, START_L3);
         runSingleMemoryReader(filenamePrefix, START_L3_SECONDARY);
         runMultipleMemoryReaderSingleL3(filenamePrefix, START_L3);
         runMultipleMemoryReaderSingleL3(filenamePrefix, START_L3_SECONDARY);
         runMultipleMemoryReaderAllL3(filenamePrefix, START_L3);
+        runMultipleMemoryReaderAllL3(filenamePrefix, START_L3_SECONDARY); //This will possibly include another L3 since pairing is not used (like it is with FIFO testing)
 
-        //Testing another L3
+        //Writing
         runSingleMemoryWriter(filenamePrefix, START_L3);
         runSingleMemoryWriter(filenamePrefix, START_L3_SECONDARY);
         runMultipleMemoryWriterSingleL3(filenamePrefix, START_L3);
         runMultipleMemoryWriterSingleL3(filenamePrefix, START_L3_SECONDARY);
         runMultipleMemoryWriterAllL3(filenamePrefix, START_L3);
+        runMultipleMemoryWriterAllL3(filenamePrefix, START_L3_SECONDARY);
     #endif
 
     return 0;
