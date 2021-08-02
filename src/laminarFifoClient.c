@@ -7,6 +7,9 @@
 #include <string.h>
 #include "timeHelpers.h"
 #include "testParams.h"
+#include "laminarFIFOFlush.h"
+
+#define FIFO_CLIENT_CLFLUSH
 
 void *fifo_client_thread(void* args){
     laminar_fifo_threadArgs_t *args_cast = (laminar_fifo_threadArgs_t *)args;
@@ -78,6 +81,12 @@ void *fifo_client_thread(void* args){
             //Read from array
             __builtin_memcpy_inline(&PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
             PartitionCrossingFIFO_readOffsetCached_re = PartitionCrossingFIFO_readOffsetPtr_re_local;
+
+            #ifdef FIFO_CLIENT_CLFLUSH
+                //Invalidate cache lines of shared buffer which were just read
+                cacheInvalidateRange(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
+            #endif
+
             //Update Read Ptr
             atomic_store_explicit(PartitionCrossingFIFO_readOffsetPtr_re, PartitionCrossingFIFO_readOffsetPtr_re_local, memory_order_release);
         } //End Scope for PartitionCrossingFIFO_N2_TO_1_0 FIFO Read

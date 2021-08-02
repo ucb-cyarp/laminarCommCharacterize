@@ -7,6 +7,9 @@
 #include <string.h>
 #include "timeHelpers.h"
 #include "testParams.h"
+#include "laminarFIFOFlush.h"
+
+// #define FIFO_SERVER_CLFLUSH
 
 void *fifo_server_thread(void* args){
     laminar_fifo_threadArgs_t *args_cast = (laminar_fifo_threadArgs_t *)args;
@@ -92,6 +95,12 @@ void *fifo_server_thread(void* args){
                 PartitionCrossingFIFO_writeOffsetPtr_re_local++;
             }
             PartitionCrossingFIFO_writeOffsetCached_re = PartitionCrossingFIFO_writeOffsetPtr_re_local;
+
+            #ifdef FIFO_SERVER_CLFLUSH
+                //Invalidate cache lines of shared buffer which were just written
+                cacheInvalidateRange(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_writeOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
+            #endif
+
             //Update Write Ptr
             atomic_store_explicit(PartitionCrossingFIFO_writeOffsetPtr_re, PartitionCrossingFIFO_writeOffsetPtr_re_local, memory_order_release);
         } //End Scope for PartitionCrossingFIFO FIFO Write
