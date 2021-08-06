@@ -9,7 +9,7 @@
 #include "memoryReader.h"
 #include "memoryWriter.h"
 
-#define RYZEN_3970_NOSMT
+#define RYZEN_3970_NOSMT_BIOS_UPDATE
 
 #ifdef RYZEN_3970_NOSMT
     #define CORES_PER_L3 (4)
@@ -22,6 +22,22 @@
                                               { 5,  6,  7,  8}, 
                                               { 9, 10, 11, 12}, 
                                               {13, 14, 15, 16}, 
+                                              {20, 21, 22, 23}, 
+                                              {24, 25, 26, 27}, 
+                                              {28, 29, 30, 31}};
+#endif
+
+#ifdef RYZEN_3970_NOSMT_BIOS_UPDATE
+    #define CORES_PER_L3 (4)
+    #define L3_S (8)
+    #define START_L3 (2)
+    #define START_L3_SECONDARY (1)
+
+    const int CORE_MAP[L3_S][CORES_PER_L3] = {{ 0,  1,  2,  3}, 
+                                              { 4,  5,  6,  7}, 
+                                              { 8,  9, 10, 11}, 
+                                              {12, 13, 14, 15}, 
+                                              {16, 17, 18, 19}, 
                                               {20, 21, 22, 23}, 
                                               {24, 25, 26, 27}, 
                                               {28, 29, 30, 31}};
