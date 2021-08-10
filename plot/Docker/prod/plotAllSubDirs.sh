@@ -12,7 +12,7 @@ do
         echo "cd ${fileFullPath}"
         cd "${fileFullPath}"
         echo "${cmd} --ylim 0 200 --title ${file}"
-        ${cmd} --ylim 0 200 --title "${file}"
+        ${cmd} --ylim 0 250 --title "${file}"
     fi
 done
 
