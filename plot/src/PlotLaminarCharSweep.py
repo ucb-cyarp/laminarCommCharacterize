@@ -96,7 +96,7 @@ def plotSweep(results: SweepRtnType, ylim, title: str, outputPrefix: str, plotPt
     scatter = []
     colors = []
 
-    cmap = plt.get_cmap('tab10')
+    cmap = plt.get_cmap('tab20')
 
     #Also make a dataframe to export to a CSV file for easy analysis
     tbl = pd.DataFrame()
@@ -105,35 +105,40 @@ def plotSweep(results: SweepRtnType, ylim, title: str, outputPrefix: str, plotPt
     #Plot Points First (if Applicable)
     if plotPts:
         for (i, testName) in enumerate(REPORTS): #Use the order in REPORTS (via a generator)
-            color = cmap(i)
+            if sweepResults:
+                if testName in sweepResults[0]:
 
-            #Plot the raw points in the collected test runs.  Each point is typically the rate expereienced by a given FIFO
-        
-            pointXPos = np.empty(shape=(0))
-            pointYPos = np.empty(shape=(0))
+                    color = cmap(i)
 
-            for idx, resultPt in enumerate(sweepResults):
-                yVals = resultPt[testName].result['ServerGbps'].to_numpy()
-                xVals = np.full(yVals.shape, blkSizesBytes[idx]) #The x value (block size) of all of these points is the same
+                    #Plot the raw points in the collected test runs.  Each point is typically the rate expereienced by a given FIFO
+                    pointXPos = np.empty(shape=(0))
+                    pointYPos = np.empty(shape=(0))
 
-                pointXPos = np.append(pointXPos, xVals)
-                pointYPos = np.append(pointYPos, yVals)
+                    for idx, resultPt in enumerate(sweepResults):
+                        yVals = getRates(resultPt[testName]).to_numpy()
+                        xVals = np.full(yVals.shape, blkSizesBytes[idx]) #The x value (block size) of all of these points is the same
 
-            currentScatter = ax.scatter(pointXPos, pointYPos, color=color, label=None, alpha=pointAlpha,  linewidths=0)
-            scatter.append(currentScatter)
+                        pointXPos = np.append(pointXPos, xVals)
+                        pointYPos = np.append(pointYPos, yVals)
+
+                    currentScatter = ax.scatter(pointXPos, pointYPos, color=color, label=None, alpha=pointAlpha,  linewidths=0)
+                    scatter.append(currentScatter)
 
     #Plot Average Lines
     for (i, testName) in enumerate(REPORTS): #Use the order in REPORTS (via a generator)
-        color = cmap(i)
+        if sweepResults:
+                if testName in sweepResults[0]:
 
-        #We have a list of datapoints, for each block size
-        #Need to extract the particular test case we are interested in as well as take the average
-        avgGbps = [getServerAvgRate(resultPt[testName]) for resultPt in sweepResults]
-        tbl[testName] = avgGbps
-        
-        currentLine = ax.plot(blkSizesBytes, avgGbps, label=testName, color=color, linewidth=avgLineWidth)
-        lines.append(currentLine)
-        colors.append(color)
+                    color = cmap(i)
+
+                    #We have a list of datapoints, for each block size
+                    #Need to extract the particular test case we are interested in as well as take the average
+                    avgGbps = [getAvgRate(resultPt[testName]) for resultPt in sweepResults]
+                    tbl[testName] = avgGbps
+                    
+                    currentLine = ax.plot(blkSizesBytes, avgGbps, label=testName, color=color, linewidth=avgLineWidth)
+                    lines.append(currentLine)
+                    colors.append(color)
 
     if ylim:
         ax.set_ylim(ylim)
@@ -167,7 +172,7 @@ def plotSweepPtsSeperatePlots(results: SweepRtnType, ylim, title: str, outputPre
     yLimMin = None
     yLimMax = None
 
-    cmap = plt.get_cmap('tab10')
+    cmap = plt.get_cmap('tab20')
 
     #Also make a dataframe to export to a CSV file for easy analysis
     tbl = pd.DataFrame()
@@ -175,55 +180,57 @@ def plotSweepPtsSeperatePlots(results: SweepRtnType, ylim, title: str, outputPre
 
     #Plot Points First
     for (i, testName) in enumerate(REPORTS): #Use the order in REPORTS (via a generator)
-        fig, ax = plt.subplots()
+        if sweepResults:
+            if testName in sweepResults[0]:
+                fig, ax = plt.subplots()
 
-        color = cmap(i)
+                color = cmap(i)
 
-        pointXPos = np.empty(shape=(0))
-        pointYPos = np.empty(shape=(0))
+                pointXPos = np.empty(shape=(0))
+                pointYPos = np.empty(shape=(0))
 
-        #Plot the raw points in the collected test runs.  Each point is typically the rate expereienced by a given FIFO
-        for idx, resultPt in enumerate(sweepResults):
-            yVals = resultPt[testName].result['ServerGbps'].to_numpy()
-            xVals = np.full(yVals.shape, blkSizesBytes[idx]) #The x value (block size) of all of these points is the same
+                #Plot the raw points in the collected test runs.  Each point is typically the rate expereienced by a given FIFO
+                for idx, resultPt in enumerate(sweepResults):
+                    yVals = getRates(resultPt[testName]).to_numpy()
+                    xVals = np.full(yVals.shape, blkSizesBytes[idx]) #The x value (block size) of all of these points is the same
 
-            pointXPos = np.append(pointXPos, xVals)
-            pointYPos = np.append(pointYPos, yVals)
+                    pointXPos = np.append(pointXPos, xVals)
+                    pointYPos = np.append(pointYPos, yVals)
 
-        currentScatter = ax.scatter(pointXPos, pointYPos, color=color, label=testName, alpha=pointAlpha,  linewidths=0)
-        scatter.append(currentScatter)
+                currentScatter = ax.scatter(pointXPos, pointYPos, color=color, label=testName, alpha=pointAlpha,  linewidths=0)
+                scatter.append(currentScatter)
 
-        #Plot the Average Line
-        avgGbps = [getServerAvgRate(resultPt[testName]) for resultPt in sweepResults]
-        tbl[testName] = avgGbps
-        
-        currentLine = ax.plot(blkSizesBytes, avgGbps, label=testName+' - Harmonic Avg.', color=(0, 0, 0, 1), linewidth=avgLineWidth) #For seperate plots, plot the average line in black
-        lines.append(currentLine)
-        colors.append(color)
+                #Plot the Average Line
+                avgGbps = [getAvgRate(resultPt[testName]) for resultPt in sweepResults]
+                tbl[testName] = avgGbps
+                
+                currentLine = ax.plot(blkSizesBytes, avgGbps, label=testName+' - Harmonic Avg.', color=(0, 0, 0, 1), linewidth=avgLineWidth) #For seperate plots, plot the average line in black
+                lines.append(currentLine)
+                colors.append(color)
 
-        ax.set_ylabel('Rate (Gbps)')
-        ax.set_xlabel('Block Size (bytes)')
-        ax.set_title(title)
-        ax.legend(fontsize=8)
+                ax.set_ylabel('Rate (Gbps)')
+                ax.set_xlabel('Block Size (bytes)')
+                ax.set_title(title)
+                ax.legend(fontsize=8)
 
-        # fig.tight_layout()
+                # fig.tight_layout()
 
-        if ylim:
-            ax.set_ylim(ylim)
-        else:
-            yLims = ax.get_ylim()
-            if yLimMin is None:
-                yLimMin = yLims[0]
-            else:
-                yLimMin = min(yLimMin, yLims[0])
+                if ylim:
+                    ax.set_ylim(ylim)
+                else:
+                    yLims = ax.get_ylim()
+                    if yLimMin is None:
+                        yLimMin = yLims[0]
+                    else:
+                        yLimMin = min(yLimMin, yLims[0])
 
-            if yLimMax is None:
-                yLimMax = yLims[1]
-            else:
-                yLimMax = max(yLimMax, yLims[1])
+                    if yLimMax is None:
+                        yLimMax = yLims[1]
+                    else:
+                        yLimMax = max(yLimMax, yLims[1])
 
-        figs.append(fig)
-        axs.append(ax)
+                figs.append(fig)
+                axs.append(ax)
 
     #Set the y limits of the subplots to all be the same (if ylim provided, it is set earlier)
     if not ylim:    

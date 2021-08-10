@@ -25,9 +25,17 @@ ifneq ($(FIFO_LEN_BLKS),)
 DEFINES+= -DFIFO_LEN_BLKS=$(FIFO_LEN_BLKS)
 endif
 
+ifneq ($(FIFO_TESTS),)
+DEFINES+= -DFIFO_TESTS=$(FIFO_TESTS)
+endif
+
+ifneq ($(MEM_TESTS),)
+DEFINES+= -DMEM_TESTS=$(MEM_TESTS)
+endif
+
 TEMPLATE_FILES=
 
-SRCS=commCharaterize.c laminarFifoClient.c laminarFifoServer.c laminarFifoRunner.c timeHelpers.c vitisNumaAllocHelpers.c
+SRCS=commCharaterize.c laminarFifoClient.c laminarFifoServer.c laminarFifoRunner.c memoryRunner.c memoryReader.c memoryWriter.c timeHelpers.c vitisNumaAllocHelpers.c
 OBJS=$(patsubst %.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 #Production
