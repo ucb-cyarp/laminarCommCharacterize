@@ -80,8 +80,9 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
             }
 
             //Read from array
-            avxMemcpy(PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
+            avxNonTemporalMemcpyAligned(PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
             PartitionCrossingFIFO_readOffsetCached_re = PartitionCrossingFIFO_readOffsetPtr_re_local;
+            _mm_lfence();
             //Update Read Ptr
             atomic_store_explicit(PartitionCrossingFIFO_readOffsetPtr_re, PartitionCrossingFIFO_readOffsetPtr_re_local, memory_order_release);
         } //End Scope for PartitionCrossingFIFO_N2_TO_1_0 FIFO Read

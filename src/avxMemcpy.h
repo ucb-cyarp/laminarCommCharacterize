@@ -2,6 +2,7 @@
 #define _AVX_MEMCPY_H
 
 #include <immintrin.h>
+#include <assert.h>
 
 #define avxMemcpy(DST, SRC, BYTES){\
 {\
@@ -33,6 +34,26 @@
     for(int i = 0; i<bytes; i++){\
         char ldVal = src[(avx256Copies*4+avx128Copies*2+fp64Copies)*8+i];\
         dst[(avx256Copies*4+avx128Copies*2+fp64Copies)*8+i] = ldVal;\
+    }\
+}\
+}
+
+//This version relies on the src and dst arrays to be aligned to 256 bit boundaries
+//It also relies on the BYTES being a multiple of the 256 bit alignment - only does AVX2 load/stores
+//Can be updated to allow smaller BYTES - using SSE nontemporal intrinsics and quadword intrinsics
+//Can also be re-written to do in-place re-aligment
+#define avxNonTemporalMemcpyAligned(DST, SRC, BYTES){\
+{\
+    static_assert((BYTES) % 32 == 0, "BYTES must be a multiple of 32");\
+\
+    int bytes = (BYTES);\
+    int avx256Copies = bytes/32;\
+    \
+    __m256i* dstDouble = (__m256i*) (DST);\
+    __m256i* srcDouble = (__m256i*) (SRC);\
+    for(int i = 0; i<avx256Copies; i++){\
+        __m256i ldVal = _mm256_stream_load_si256(srcDouble+i);\
+        _mm256_stream_si256(dstDouble+i, ldVal);\
     }\
 }\
 }

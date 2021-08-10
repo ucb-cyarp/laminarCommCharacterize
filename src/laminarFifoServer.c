@@ -86,7 +86,7 @@ void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
         { //Begin Scope for PartitionCrossingFIFO FIFO Write
             int PartitionCrossingFIFO_writeOffsetPtr_re_local = PartitionCrossingFIFO_writeOffsetCached_re;
             //Write into array
-            avxMemcpy(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_writeOffsetPtr_re_local, PartitionCrossingFIFO_writeTmp, sizeof(PartitionCrossingFIFO_t));
+            avxNonTemporalMemcpyAligned(PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_writeOffsetPtr_re_local, PartitionCrossingFIFO_writeTmp, sizeof(PartitionCrossingFIFO_t));
             if (PartitionCrossingFIFO_writeOffsetPtr_re_local >= FIFO_LEN_BLKS)
             {
                 PartitionCrossingFIFO_writeOffsetPtr_re_local = 0;
@@ -96,6 +96,7 @@ void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
                 PartitionCrossingFIFO_writeOffsetPtr_re_local++;
             }
             PartitionCrossingFIFO_writeOffsetCached_re = PartitionCrossingFIFO_writeOffsetPtr_re_local;
+            _mm_sfence();
             //Update Write Ptr
             atomic_store_explicit(PartitionCrossingFIFO_writeOffsetPtr_re, PartitionCrossingFIFO_writeOffsetPtr_re_local, memory_order_release);
         } //End Scope for PartitionCrossingFIFO FIFO Write
