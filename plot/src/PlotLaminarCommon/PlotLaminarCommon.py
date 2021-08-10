@@ -213,11 +213,15 @@ def checkResults(results: typing.Dict[str, TestResult], clientServerTolerance: f
     problem = False
     for result in results.values():
         if result.type == TestResultType.FIFO:
-            ratio = result.result['ServerGbps']/result.result['ClientGbps']
+            serverGbps = result.result['ServerGbps']
+            clientGbps = result.result['ClientGbps']
+            ratio = serverGbps/clientGbps
             outOfSpec = (ratio > (1+clientServerTolerance)) | (ratio < (1-clientServerTolerance)) #See https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html for why parens are needed
 
             if outOfSpec.any():
-                warnings.warn(f'Server Gbps differs from Client Gbps by > {clientServerTolerance:%} [{result.name}]', UserWarning)
+                amtOutOfSpec = ratio - 1
+                maxOutOfSpecInd = amtOutOfSpec.abs().argmax()
+                warnings.warn(f'Server Gbps ({serverGbps[maxOutOfSpecInd]}) differs from Client Gbps ({clientGbps[maxOutOfSpecInd]}) by > {clientServerTolerance:%} ({amtOutOfSpec[maxOutOfSpecInd]:%}) [{result.name}]', UserWarning)
                 problem = True
         elif result.type != TestResultType.MEMORY:
             raise RuntimeError('Unknown TestResultType: ' + str(result.type))
