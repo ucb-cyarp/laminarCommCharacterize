@@ -75,7 +75,7 @@ def loadSweep(dir: str):
                 #Load the results for the directory
                 result = loadResults(dirPath)
                 #Check the result
-                checkResults(result, 0.01)
+                checkResults(result, 0.02)
                 resultMap[blkSize] = result
                 print(f'Loaded and Checked {fileName}')
 

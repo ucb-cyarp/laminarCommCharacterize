@@ -119,7 +119,7 @@ def main():
     setup_rtn = setup()
 
     results = loadResults(setup_rtn.inputDir)
-    checkResults(results, 0.01)
+    checkResults(results, 0.02)
     plotResults(results, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir, setup_rtn.avgLines)
 
 if __name__ == '__main__':
