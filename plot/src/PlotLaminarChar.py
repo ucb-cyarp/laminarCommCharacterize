@@ -23,7 +23,7 @@ def plotResults(results: typing.Dict[str, TestResult], ylim, title: str, outputP
     centerXPos = [] #The center of the bars in the grouped series
     colors = []
 
-    cmap = plt.get_cmap('tab10')
+    cmap = plt.get_cmap('tab20')
 
     width = 1
 
@@ -31,21 +31,24 @@ def plotResults(results: typing.Dict[str, TestResult], ylim, title: str, outputP
     fig, ax = plt.subplots()
 
     currentLblOffset = 0
-    for (i, result) in enumerate((results[test] for test in REPORTS)): #Use the order in REPORTS (via a generator)
-        #Get Lbls
-        currentLbls = result.result['label'].to_list()
-        xPos = np.arange(currentLblOffset, currentLblOffset+len(currentLbls)) * width
-        barLblXPos = np.append(barLblXPos, xPos)
-        currentLblOffset += len(currentLbls)+1
-        barLbls.extend(currentLbls)
+    for (i, test) in enumerate(REPORTS):
+        if test in results:
+            result=results[test]
 
-        color = cmap(i)
-        currentBar = ax.bar(xPos, result.result['ServerGbps'], width, label=result.name, color=color)
+            #Get Lbls
+            currentLbls = result.result['label'].to_list()
+            xPos = np.arange(currentLblOffset, currentLblOffset+len(currentLbls)) * width
+            barLblXPos = np.append(barLblXPos, xPos)
+            currentLblOffset += len(currentLbls)+1
+            barLbls.extend(currentLbls)
 
-        averages.append(getServerAvgRate(result)) #Convert from bytes/sec to Gbps
-        bars.append(currentBar)
-        colors.append(color)
-        centerXPos.append(xPos.mean())
+            color = cmap(i)
+            currentBar = ax.bar(xPos, getRates(result), width, label=result.name, color=color)
+
+            averages.append(getAvgRate(result)) #Convert from bytes/sec to Gbps
+            bars.append(currentBar)
+            colors.append(color)
+            centerXPos.append(xPos.mean())
 
     currentXlim = ax.get_xlim() #Need this if adding avg lines
 
@@ -116,7 +119,7 @@ def main():
     setup_rtn = setup()
 
     results = loadResults(setup_rtn.inputDir)
-    checkResults(results, 0.01)
+    checkResults(results, 0.02)
     plotResults(results, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir, setup_rtn.avgLines)
 
 if __name__ == '__main__':
