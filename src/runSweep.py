@@ -21,6 +21,9 @@ BLK_SIZE_STEP: int = 1 #These are in UNIT_SIZE
 
 SLACK_RPT_PERIOD = 50
 
+RUN_FIFO_TESTS: bool = True
+RUN_MEM_TESTS: bool = True
+
 def main():
     #Parse CLI Arguments for Config File Location
     parser = argparse.ArgumentParser(description='Runs a sweep of the Laminar Comm Characterize test')
@@ -50,7 +53,9 @@ def main():
             slackStatusPost(f'*Laminar FIFO Characterize Starting*\nBlock Size: {blkSizeBytes:d}\nBlock Transactions: {blockTransactions:d}\nBytes Sent: {bytesSent:d}\nHost: {hostname}\nTime: {cur_time}')
 
         #Build new version
-        cmd = f'FIFO_BLK_SIZE_CPLX_FLOAT={blkSize:d} TRANSACTIONS_BLKS={blockTransactions:d} ./build.sh'
+        fifoTestEn = '1' if RUN_FIFO_TESTS else '0'
+        memTestEn = '1' if RUN_MEM_TESTS else '0'
+        cmd = f'FIFO_BLK_SIZE_CPLX_FLOAT={blkSize:d} TRANSACTIONS_BLKS={blockTransactions:d} FIFO_TESTS={fifoTestEn} MEM_TESTS={memTestEn} ./build.sh'
         print('\nRunning: {}\n'.format(cmd))
         rtn = subprocess.call(cmd, shell=True, executable='/bin/bash')
         if rtn != 0:
