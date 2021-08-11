@@ -6,7 +6,7 @@ if [[ -z  ${FIFO_BLK_SIZE_CPLX_FLOAT} ]]; then
 fi
 
 if [[ -z ${TRANSACTIONS_BLKS} ]]; then
-    TRANSACTIONS_BLKS=20000000
+    TRANSACTIONS_BLKS=1000000
 fi
 
 if [[ -z ${FIFO_TESTS} ]]; then
