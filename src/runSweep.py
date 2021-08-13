@@ -13,6 +13,7 @@ import math
 from slackUtils import *
 
 #TODO: Make params?.  Would need to make params in outer script which loads the slack URL
+TGT_DUTY_CYCLE: float = 1.0
 TARGET_BYTES: int = 1000000000
 UNIT_SIZE: int = 4*2 #Complex floats (8 bytes) are the unit described in the FIFO structure
 BLK_SIZE_START: int = 1 #These are in UNIT_SIZE
@@ -50,12 +51,12 @@ def main():
         rptPrefix = os.path.join(rptDir, 'report') #'report' is the prefix of the report filenames.  It can be changed
 
         if i % SLACK_RPT_PERIOD == 0:
-            slackStatusPost(f'*Laminar FIFO Characterize Starting*\nBlock Size: {blkSizeBytes:d}\nBlock Transactions: {blockTransactions:d}\nBytes Sent: {bytesSent:d}\nHost: {hostname}\nTime: {cur_time}')
+            slackStatusPost(f'*Laminar FIFO Characterize Starting*\nBlock Size: {blkSizeBytes:d}\nBlock Transactions: {blockTransactions:d}\nBytes Sent: {bytesSent:d}\nTgt Duty Cycle: {TGT_DUTY_CYCLE:f}\nHost: {hostname}\nTime: {cur_time}')
 
         #Build new version
         fifoTestEn = '1' if RUN_FIFO_TESTS else '0'
         memTestEn = '1' if RUN_MEM_TESTS else '0'
-        cmd = f'FIFO_BLK_SIZE_CPLX_FLOAT={blkSize:d} TRANSACTIONS_BLKS={blockTransactions:d} FIFO_TESTS={fifoTestEn} MEM_TESTS={memTestEn} ./build.sh'
+        cmd = f'FIFO_BLK_SIZE_CPLX_FLOAT={blkSize:d} TRANSACTIONS_BLKS={blockTransactions:d} TGT_DUTY_CYCLE={TGT_DUTY_CYCLE:f} FIFO_TESTS={fifoTestEn} MEM_TESTS={memTestEn} ./build.sh'
         print('\nRunning: {}\n'.format(cmd))
         rtn = subprocess.call(cmd, shell=True, executable='/bin/bash')
         if rtn != 0:
