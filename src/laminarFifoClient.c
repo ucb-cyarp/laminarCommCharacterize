@@ -66,6 +66,10 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
             }
         }
 
+        _mm_lfence(); //No loading should cross this line.  Make sure that speculative reads do not execute before reading the server ptr.  If they do, it could cause stale data to be read.
+        //Based on the standard x86_64 cache cohernecy model, this should not happen as the load order should be preserved (See AMD Architecture Programmer's Manual: 7.2 Multiprocessor Memory Access Ordering)
+        //Note: Out of order and speculative reads are generally allowed (AMD Architecture Programmer's Manual: 3.9.1.1 Read Ordering).  However, it appears the rules are different for shared memory.
+
         //Read input FIFO(s)
         //  --- Pulled from generated Laminar code (bool changed from vitisBool_t to bool)
         {  //Begin Scope for PartitionCrossingFIFO FIFO Read
@@ -82,7 +86,7 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
             //Read from array
             avxNonTemporalMemcpyAligned(PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
             PartitionCrossingFIFO_readOffsetCached_re = PartitionCrossingFIFO_readOffsetPtr_re_local;
-            _mm_lfence();
+            _mm_mfence(); //Do not want any loading or storing to cross this line.  Loading should finish, then updating (writing) the point should occure after
             //Update Read Ptr
             atomic_store_explicit(PartitionCrossingFIFO_readOffsetPtr_re, PartitionCrossingFIFO_readOffsetPtr_re_local, memory_order_release);
         } //End Scope for PartitionCrossingFIFO_N2_TO_1_0 FIFO Read
