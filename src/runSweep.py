@@ -14,16 +14,18 @@ from slackUtils import *
 
 #TODO: Make params?.  Would need to make params in outer script which loads the slack URL
 TARGET_BYTES: int = 1000000000
+# TARGET_BYTES: int = 10000000 #For testing clflush 
 UNIT_SIZE: int = 4*2 #Complex floats (8 bytes) are the unit described in the FIFO structure
 #Need these to be in increments of 256 bits (or 32 bytes, or 4 complex floats)
 BLK_SIZE_START: int = 4 #These are in UNIT_SIZE
-BLK_SIZE_END: int = 513 #These are in UNIT_SIZE
+#BLK_SIZE_END: int = 513 #These are in UNIT_SIZE
+BLK_SIZE_END: int = 2049 #These are in UNIT_SIZE
 BLK_SIZE_STEP: int = 4 #These are in UNIT_SIZE
 
-SLACK_RPT_PERIOD = 50
+SLACK_RPT_PERIOD = 20
 
 RUN_FIFO_TESTS: bool = True
-RUN_MEM_TESTS: bool = True
+RUN_MEM_TESTS: bool = False
 
 def main():
     #Parse CLI Arguments for Config File Location
