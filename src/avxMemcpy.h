@@ -42,7 +42,7 @@
 //It also relies on the BYTES being a multiple of the 256 bit alignment - only does AVX2 load/stores
 //Can be updated to allow smaller BYTES - using SSE nontemporal intrinsics and quadword intrinsics
 //Can also be re-written to do in-place re-aligment
-#define avxNonTemporalMemcpyAligned(DST, SRC, BYTES){\
+#define avxNonTemporalLoadMemcpyAligned(DST, SRC, BYTES){\
 {\
     static_assert((BYTES) % 32 == 0, "BYTES must be a multiple of 32");\
 \
@@ -53,6 +53,22 @@
     __m256i* srcDouble = (__m256i*) (SRC);\
     for(int i = 0; i<avx256Copies; i++){\
         __m256i ldVal = _mm256_stream_load_si256(srcDouble+i);\
+        _mm256_store_si256(dstDouble+i, ldVal);\
+    }\
+}\
+}
+
+#define avxNonTemporalStoreMemcpyAligned(DST, SRC, BYTES){\
+{\
+    static_assert((BYTES) % 32 == 0, "BYTES must be a multiple of 32");\
+\
+    int bytes = (BYTES);\
+    int avx256Copies = bytes/32;\
+    \
+    __m256i* dstDouble = (__m256i*) (DST);\
+    __m256i* srcDouble = (__m256i*) (SRC);\
+    for(int i = 0; i<avx256Copies; i++){\
+        __m256i ldVal = _mm256_load_si256(srcDouble+i);\
         _mm256_stream_si256(dstDouble+i, ldVal);\
     }\
 }\
