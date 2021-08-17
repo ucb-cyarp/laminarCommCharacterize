@@ -92,7 +92,7 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
             }
 
             //Read from array
-            avxNonTemporalMemcpyAligned(PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
+            avxNonTemporalLoadMemcpyAligned(PartitionCrossingFIFO_N2_TO_1_0_readTmp, PartitionCrossingFIFO_arrayPtr_re + PartitionCrossingFIFO_readOffsetPtr_re_local, sizeof(PartitionCrossingFIFO_t));
             PartitionCrossingFIFO_readOffsetCached_re = PartitionCrossingFIFO_readOffsetPtr_re_local;
             _mm_mfence(); //Do not want any loading or storing to cross this line.  Loading should finish, then updating (writing) the point should occure after
             //Update Read Ptr
