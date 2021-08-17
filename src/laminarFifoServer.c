@@ -86,6 +86,7 @@ void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
 
         _mm_mfence(); //No loading/storing should cross this line.  It in general should not because speculative writing should not be comitted.  See AMD Archetecture Programmer's Manual: 3.9.1.2 Write Ordering
 
+        timespec_t startWritingTime;
         asm volatile("" ::: "memory"); //Stop Re-ordering of timer
         clock_gettime(CLOCK_MONOTONIC, &startWritingTime);
         asm volatile("" ::: "memory"); //Stop Re-ordering of timer

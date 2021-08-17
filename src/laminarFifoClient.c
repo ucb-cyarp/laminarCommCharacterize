@@ -73,6 +73,7 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
         //Based on the standard x86_64 cache cohernecy model, this should not happen as the load order should be preserved (See AMD Architecture Programmer's Manual: 7.2 Multiprocessor Memory Access Ordering)
         //Note: Out of order and speculative reads are generally allowed (AMD Architecture Programmer's Manual: 3.9.1.1 Read Ordering).  However, it appears the rules are different for shared memory.
 
+        timespec_t startReadingTime;
         asm volatile("" ::: "memory"); //Stop Re-ordering of timer
         clock_gettime(CLOCK_MONOTONIC, &startReadingTime);
         asm volatile("" ::: "memory"); //Stop Re-ordering of timer
