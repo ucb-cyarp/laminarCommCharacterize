@@ -14,6 +14,8 @@ from enum import Enum
 
 FIFOReportFieldNamesType = collections.namedtuple('fifoReportFieldNamesType', ['serverCPU', 'clientCPU', 'serverTime', 'clientTime', 'bytesTx', 'bytesRx'])
 MemoryReportFieldNamesType = collections.namedtuple('memoryReportFieldNamesType', ['cpu', 'memoryTime', 'bytesTransacted', 'arrayLenBytes'])
+FIFODutyCycleFieldNamesType = collections.namedtuple('fifoDutyCycleReportFieldNamesType', ['serverWriteTime', 'clientReadTime'])
+MemoryDutyCycleFieldNamesType = collections.namedtuple('memoryDutyCycleReportFieldNamesType', ['memoryReadWriteTime'])
 
 
 FIFO_REPORT_FEILD_NAMES: typing.Final[FIFOReportFieldNamesType] = FIFOReportFieldNamesType(serverCPU='ServerCPU', 
@@ -27,6 +29,11 @@ MEMORY_REPORT_FEILD_NAMES: typing.Final[MemoryReportFieldNamesType] = MemoryRepo
                                                                                                  memoryTime='MemoryTime', 
                                                                                                  bytesTransacted='BytesTransacted', 
                                                                                                  arrayLenBytes='MemArrayBytes')
+
+FIFO_DUTY_CYCLE_REPORT_FEILD_NAMES: typing.Final[FIFOReportFieldNamesType] = FIFODutyCycleFieldNamesType(serverWriteTime='ServerWriteTime', 
+                                                                                                         clientReadTime='ClientReadTime')
+
+MEMORY_DUTY_CYCLE_REPORT_FEILD_NAMES: typing.Final[FIFOReportFieldNamesType] = MemoryDutyCycleFieldNamesType(memoryReadWriteTime='MemoryReadWriteTime')
 
 # REPORT_FEILD_TYPES: typing.Final[typing.Dict] = {ReportFieldNamesType.serverCPU : int,
 #                                                  ReportFieldNamesType.clientCPU : int,
@@ -112,9 +119,22 @@ def importReport(rptFiles: typing.List[str], filenameRegex: str, lblFormat: str,
                     reportPart['ServerGbps'] = (reportPart[FIFO_REPORT_FEILD_NAMES.bytesTx] / reportPart[FIFO_REPORT_FEILD_NAMES.serverTime]) * 8 / 1.0e9
                     #Compute Client Rate
                     reportPart['ClientGbps'] = (reportPart[FIFO_REPORT_FEILD_NAMES.bytesRx] / reportPart[FIFO_REPORT_FEILD_NAMES.clientTime]) * 8 / 1.0e9
+                    
+                    #If Duty Cycle Info is Present
+                    if FIFO_DUTY_CYCLE_REPORT_FEILD_NAMES.serverWriteTime in reportPart.columns:
+                        reportPart['ServerDutyCycle'] = reportPart[FIFO_DUTY_CYCLE_REPORT_FEILD_NAMES.serverWriteTime] / reportPart[FIFO_REPORT_FEILD_NAMES.serverTime]
+
+                    if FIFO_DUTY_CYCLE_REPORT_FEILD_NAMES.clientReadTime in reportPart.columns:
+                        reportPart['ClientDutyCycle'] = reportPart[FIFO_DUTY_CYCLE_REPORT_FEILD_NAMES.clientReadTime] / reportPart[FIFO_REPORT_FEILD_NAMES.clientTime]
+
                 elif type == TestResultType.MEMORY:
                     #Compute Memory Rate
                     reportPart['RateGbps'] = (reportPart[MEMORY_REPORT_FEILD_NAMES.bytesTransacted] / reportPart[MEMORY_REPORT_FEILD_NAMES.memoryTime]) * 8 / 1.0e9
+
+                    #If Duty Cycle Info is Present
+                    if MEMORY_DUTY_CYCLE_REPORT_FEILD_NAMES.memoryReadWriteTime in reportPart.columns:
+                        reportPart['MemoryDutyCycle'] = reportPart[MEMORY_DUTY_CYCLE_REPORT_FEILD_NAMES.memoryReadWriteTime] / reportPart[MEMORY_REPORT_FEILD_NAMES.memoryTime]
+
                 else:
                     raise RuntimeError('Unknown TestResultType: ' + str(type))
 

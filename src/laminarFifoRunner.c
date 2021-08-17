@@ -198,7 +198,7 @@ fifo_runner_thread_vars_container_t* startThread(_Atomic int8_t* PartitionCrossi
     return threadVarContainer;
 }
 
-void collectResults(fifo_runner_thread_vars_container_t **threadVars, double *serverTimes, double *clientTimes, int numFIFOs){
+void collectResults(fifo_runner_thread_vars_container_t **threadVars, laminar_fifo_result_t *serverResults, laminar_fifo_result_t *clientResults, int numFIFOs){
     for(int i = 0; i<numFIFOs; i++){
         int status;
         void *serverResult;
@@ -210,8 +210,8 @@ void collectResults(fifo_runner_thread_vars_container_t **threadVars, double *se
             perror(NULL);
             exit(1);
         }
-        double *serverResultCast = (double*) serverResult;
-        serverTimes[i] = *serverResultCast;
+        laminar_fifo_result_t *serverResultCast = (laminar_fifo_result_t*) serverResult;
+        serverResults[i] = *serverResultCast;
         free(serverResult);
 
         void *clientResult;
@@ -223,8 +223,8 @@ void collectResults(fifo_runner_thread_vars_container_t **threadVars, double *se
             perror(NULL);
             exit(1);
         }
-        double *clientResultCast = (double*) clientResult;
-        clientTimes[i] = *clientResultCast;
+        laminar_fifo_result_t *clientResultCast = (laminar_fifo_result_t*) clientResult;
+        clientResults[i] = *clientResultCast;
         free(clientResult);
     }
 }
@@ -235,13 +235,13 @@ void cleanupThreadVars(fifo_runner_thread_vars_container_t* vars){
     free(vars);
 }
 
-void writeResults(int *serverCPUs, int *clientCPUs, double *serverTimes, double *clientTimes, int numFIFOs, char* reportFilename){
+void writeResults(int *serverCPUs, int *clientCPUs, laminar_fifo_result_t *serverResults, laminar_fifo_result_t *clientResults, int numFIFOs, char* reportFilename){
     FILE *resultsFile = fopen(reportFilename, "w");
-    fprintf(resultsFile, "ServerCPU,ClientCPU,ServerTime,ClientTime,BytesTx,BytesRx\n");
+    fprintf(resultsFile, "ServerCPU,ClientCPU,ServerTime,ClientTime,ServerWriteTime,ClientReadTime,BytesTx,BytesRx\n");
 
     long long int bytesSent = TRANSACTIONS_BLKS*BLK_SIZE_BYTES;
     for(int i = 0; i<numFIFOs; i++){
-        fprintf(resultsFile, "%d,%d,%e,%e,%lld,%lld\n", serverCPUs[i], clientCPUs[i], serverTimes[i], clientTimes[i], bytesSent, bytesSent);
+        fprintf(resultsFile, "%d,%d,%e,%e,%e,%e,%lld,%lld\n", serverCPUs[i], clientCPUs[i], serverResults[i].duration, clientResults[i].duration, serverResults[i].readWriteTime, clientResults[i].readWriteTime, bytesSent, bytesSent);
     }
 
     fclose(resultsFile);
@@ -299,12 +299,12 @@ void runLaminarFifoBench(int *serverCPUs, int *clientCPUs, int numFIFOs, char* r
     atomic_store_explicit(startTrigger, true, memory_order_release);
 
     //Wait for threads to finish
-    double serverTimes[numFIFOs];
-    double clientTimes[numFIFOs];
-    collectResults(threadVars, serverTimes, clientTimes, numFIFOs);
+    laminar_fifo_result_t serverResults[numFIFOs];
+    laminar_fifo_result_t clientResults[numFIFOs];
+    collectResults(threadVars, serverResults, clientResults, numFIFOs);
 
     //Write results
-    writeResults(serverCPUs, clientCPUs, serverTimes, clientTimes, numFIFOs, reportFilename);
+    writeResults(serverCPUs, clientCPUs, serverResults, clientResults, numFIFOs, reportFilename);
 
     //Cleanup
     for(int i = 0; i<numFIFOs; i++){

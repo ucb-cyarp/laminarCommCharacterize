@@ -18,6 +18,11 @@ typedef struct {
     atomic_flag *readyFlag; //This is unique to each thread
 } laminar_fifo_threadArgs_t;
 
+typedef struct {
+    double duration; ///<The duration of the whole test run, including intentional stalling
+    double readWriteTime; ///<The measured time spent just reading/writing.  Does not include the compulsory FIFO head/tail index checks
+} laminar_fifo_result_t;
+
 #define BLK_SIZE_BYTES (sizeof(PartitionCrossingFIFO_t))
 
 #endif

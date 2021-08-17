@@ -1,4 +1,5 @@
 test
 testSweep
 testDRAM
+testDutyCycleSweep
 __pycache__

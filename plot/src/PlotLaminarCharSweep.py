@@ -16,6 +16,8 @@ from PlotLaminarCommon.PlotLaminarCommon import *
 
 SweepRtnType = collections.namedtuple('Sweep', ['blockSizesBytes', 'results'])
 
+DUTY_CYCLE_FIELD_NAMES = ['ServerDutyCycle', 'ClientDutyCycle', 'MemoryDutyCycle']
+
 pointAlpha = 0.1
 avgLineWidth = 1
 
@@ -157,6 +159,8 @@ def plotSweep(results: SweepRtnType, ylim, title: str, outputPrefix: str, plotPt
         fig.savefig(outputPrefix+suffix+'.pdf', format='pdf')
         tbl.to_csv(outputPrefix+suffix+'.csv', index=False)
 
+    plt.close(fig)
+
 def plotSweepPtsSeperatePlots(results: SweepRtnType, ylim, title: str, outputPrefix: str):
     blkSizesBytes = results.blockSizesBytes #ordered list
     sweepResults = results.results #ordered list corresponding to blkSizesBytes
@@ -242,6 +246,115 @@ def plotSweepPtsSeperatePlots(results: SweepRtnType, ylim, title: str, outputPre
             suffix = '_comm_sweep_pts' + '_subplt'+str(i)
             fig.savefig(outputPrefix+suffix+'.pdf', format='pdf')
 
+    for fig in figs:
+        plt.close(fig)
+
+def plotDutyCycleSweepPtsSeperatePlots(results: SweepRtnType, title: str, outputPrefix: str):
+    blkSizesBytes = results.blockSizesBytes #ordered list
+    sweepResults = results.results #ordered list corresponding to blkSizesBytes
+
+    #Modified from numpy example https://matplotlib.org/stable/gallery/lines_bars_and_markers/barchart.html
+    figs = []
+    axs = []
+
+    lines = []
+    scatter = []
+    colors = []
+
+    yLimMin = None
+    yLimMax = None
+
+    filenames = []
+
+    cmap = plt.get_cmap('tab20')
+
+    #Also make a dataframe to export to a CSV file for easy analysis
+    tbl = pd.DataFrame()
+    tbl['blkSizeBytes'] = blkSizesBytes
+
+    #Plot Points First
+    for (i, testName) in enumerate(REPORTS): #Use the order in REPORTS (via a generator)
+        if sweepResults:
+            if testName in sweepResults[0]:
+                for dutyCycleFieldName in DUTY_CYCLE_FIELD_NAMES:
+                    if dutyCycleFieldName in (sweepResults[0])[testName].result.columns:
+                        fig, ax = plt.subplots()
+
+                        color = cmap(i)
+
+                        pointXPos = np.empty(shape=(0))
+                        pointYPos = np.empty(shape=(0))
+
+                        #Plot the raw points in the collected test runs.  Each point is typically the rate expereienced by a given FIFO
+                        for idx, resultPt in enumerate(sweepResults):
+                            yVals = (resultPt[testName].result)[dutyCycleFieldName]
+                            xVals = np.full(yVals.shape, blkSizesBytes[idx]) #The x value (block size) of all of these points is the same
+
+                            pointXPos = np.append(pointXPos, xVals)
+                            pointYPos = np.append(pointYPos, yVals)
+
+                        scatterLbl = testName + ' - ' + dutyCycleFieldName
+                        currentScatter = ax.scatter(pointXPos, pointYPos, color=color, label=scatterLbl, alpha=pointAlpha,  linewidths=0)
+                        scatter.append(currentScatter)
+
+                        #Plot the Average Line
+                        avgDutyCycle = [((resultPt[testName].result)[dutyCycleFieldName]).mean() for resultPt in sweepResults]
+                        tbl[testName] = avgDutyCycle
+                        
+                        currentLine = ax.plot(blkSizesBytes, avgDutyCycle, label=testName+' - Avg.', color=(0, 0, 0, 1), linewidth=avgLineWidth) #For seperate plots, plot the average line in black
+                        lines.append(currentLine)
+                        colors.append(color)
+
+                        ax.set_ylabel('Duty Cycle')
+                        ax.set_xlabel('Block Size (bytes)')
+                        ax.set_title(title)
+                        ax.legend(fontsize=8)
+
+                        # fig.tight_layout()
+
+                        ax.set_ylim(0, 1.1)
+                        figs.append(fig)
+                        axs.append(ax)
+                        filenames.append(outputPrefix + '_comm_sweep_pts' + '_subplt'+str(i) + '_dutyCycle_' + dutyCycleFieldName + '.pdf')
+
+    if outputPrefix:
+        for i, fig in enumerate(figs):
+            fig.savefig(filenames[i], format='pdf')
+
+    for fig in figs:
+        plt.close(fig)
+
+def exportDutyCycleInfo(results: SweepRtnType, outputPrefix: str):
+    blkSizesBytes = results.blockSizesBytes #ordered list
+    sweepResults = results.results #ordered list corresponding to blkSizesBytes
+
+    #Also make a dataframe to export to a CSV file for easy analysis
+    tbl = pd.DataFrame()
+    tbl['blkSizeBytes'] = blkSizesBytes
+
+    foundDutyCycle = False
+
+    #Plot Average Lines
+    for (i, testName) in enumerate(REPORTS): #Use the order in REPORTS (via a generator)
+        if sweepResults:
+                if testName in sweepResults[0]:
+
+                    #We have a list of datapoints, for each block size
+                    #Need to extract the particular test case we are interested in as well as take the average
+                    avgGbps = [getAvgRate(resultPt[testName]) for resultPt in sweepResults]
+                    tbl[testName + ' - Rate (Gbps)'] = avgGbps
+
+                    for dutyCycleFieldName in DUTY_CYCLE_FIELD_NAMES:
+                        if dutyCycleFieldName in (sweepResults[0])[testName].result.columns:
+                            avgDutyCycle = [((resultPt[testName].result)[dutyCycleFieldName]).mean() for resultPt in sweepResults]
+                            tbl[testName + ' - ' + dutyCycleFieldName] = avgDutyCycle
+                            foundDutyCycle = True
+                    
+    suffix = '_comm_sweep_duty_cycle'
+    
+    if outputPrefix and foundDutyCycle:
+        tbl.to_csv(outputPrefix+suffix+'.csv', index=False)
+
 def main():
     setup_rtn = setup()
 
@@ -252,6 +365,9 @@ def main():
         #Also plot the version with just averages
         plotSweep(sweep, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir, False)
         plotSweepPtsSeperatePlots(sweep, setup_rtn.yLim, setup_rtn.title, setup_rtn.outputFileDir)
+
+    plotDutyCycleSweepPtsSeperatePlots(sweep, setup_rtn.title, setup_rtn.outputFileDir)
+    exportDutyCycleInfo(sweep, setup_rtn.outputFileDir)
 
 if __name__ == '__main__':
     main()

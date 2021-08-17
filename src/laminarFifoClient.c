@@ -29,6 +29,9 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
     //However, based on printing the address, it looks like this is not nessisarily true
     PartitionCrossingFIFO_t *PartitionCrossingFIFO_N2_TO_1_0_readTmp = aligned_alloc(VITIS_MEM_ALIGNMENT, sizeof(PartitionCrossingFIFO_t));
 
+    //==== Setup duty cycle ====
+    double readTimeAccum = 0;
+
     //==== Signal Ready ====
     atomic_thread_fence(memory_order_acquire);
     atomic_flag_clear_explicit(readyFlag, memory_order_release);
@@ -70,6 +73,10 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
         //Based on the standard x86_64 cache cohernecy model, this should not happen as the load order should be preserved (See AMD Architecture Programmer's Manual: 7.2 Multiprocessor Memory Access Ordering)
         //Note: Out of order and speculative reads are generally allowed (AMD Architecture Programmer's Manual: 3.9.1.1 Read Ordering).  However, it appears the rules are different for shared memory.
 
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        clock_gettime(CLOCK_MONOTONIC, &startReadingTime);
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+
         //Read input FIFO(s)
         //  --- Pulled from generated Laminar code (bool changed from vitisBool_t to bool)
         {  //Begin Scope for PartitionCrossingFIFO FIFO Read
@@ -96,6 +103,26 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
         :
         : "rm" (*PartitionCrossingFIFO_N2_TO_1_0_readTmp)
         :);
+
+        timespec_t stopReadingTime;
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        clock_gettime(CLOCK_MONOTONIC, &stopReadingTime);
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        double readDuration = difftimespec(&stopReadingTime, &startReadingTime);
+
+        readTimeAccum += readDuration;
+
+        double tgtStallDuration = readDuration/(TGT_DUTY_CYCLE) - readDuration;
+
+        //Try to wait for such an amount of time that the target duty cycle is met
+        double stallDuration;
+        do{
+            timespec_t stallTime;
+            asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+            clock_gettime(CLOCK_MONOTONIC, &stallTime);
+            asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+            stallDuration = difftimespec(&stallTime, &stopReadingTime);
+        }while(stallDuration<tgtStallDuration);
     }
 
     timespec_t stopTime;
@@ -106,7 +133,8 @@ void *fifo_client_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
     free(PartitionCrossingFIFO_N2_TO_1_0_readTmp);
 
     //Return results
-    double* duration = malloc(sizeof(double));
-    *duration = difftimespec(&stopTime, &startTime);
-    return duration;
+    laminar_fifo_result_t* result = malloc(sizeof(laminar_fifo_result_t));
+    result->duration = difftimespec(&stopTime, &startTime);
+    result->readWriteTime = readTimeAccum;
+    return result;
 }

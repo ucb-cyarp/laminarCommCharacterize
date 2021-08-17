@@ -79,6 +79,8 @@ def plotResults(results: typing.Dict[str, TestResult], ylim, title: str, outputP
     if outputPrefix:
         plt.savefig(outputPrefix+'_comm.pdf', format='pdf')
 
+    plt.close(fig)
+
 def setup():
     #Parse CLI Arguments for Config File Location
     parser = argparse.ArgumentParser(description='Plots Results form Laminar Comm Characterize')

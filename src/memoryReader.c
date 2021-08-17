@@ -35,6 +35,9 @@ void *memory_reader_thread(void* args){
     //==== Set initial read location =====
     int bufferIdx = 0;
 
+    //==== Setup duty cycle ====
+    double readTimeAccum = 0;
+
     //==== Signal Ready ====
     atomic_thread_fence(memory_order_acquire);
     atomic_flag_clear_explicit(readyFlag, memory_order_release);
@@ -58,6 +61,11 @@ void *memory_reader_thread(void* args){
 
         //Since this is not a FIFO transfer, there is no need for checking pointers or for atomic read/writes with aquire/release ordering
 
+        timespec_t startReadingTime;
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        clock_gettime(CLOCK_MONOTONIC, &startReadingTime);
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+
         //Read input array
         //
         {  //Begin Scope for Read
@@ -73,6 +81,26 @@ void *memory_reader_thread(void* args){
         :
         : "rm" (readTmp)
         :);
+
+        timespec_t stopReadingTime;
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        clock_gettime(CLOCK_MONOTONIC, &stopReadingTime);
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        double readDuration = difftimespec(&stopReadingTime, &startReadingTime);
+
+        readTimeAccum += readDuration;
+
+        double tgtStallDuration = readDuration/(TGT_DUTY_CYCLE) - readDuration;
+        
+        //Try to wait for such an amount of time that the target duty cycle is met
+        double stallDuration;
+        do{
+            timespec_t stallTime;
+            asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+            clock_gettime(CLOCK_MONOTONIC, &stallTime);
+            asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+            stallDuration = difftimespec(&stallTime, &stopReadingTime);
+        }while(stallDuration<tgtStallDuration);
     }
 
     timespec_t stopTime;
@@ -81,8 +109,9 @@ void *memory_reader_thread(void* args){
     asm volatile("" ::: "memory"); //Stop Re-ordering of timer
 
     //Return results
-    double* duration = malloc(sizeof(double));
-    *duration = difftimespec(&stopTime, &startTime);
-    return duration;
+    laminar_fifo_result_t* result = malloc(sizeof(laminar_fifo_result_t));
+    result->duration = difftimespec(&stopTime, &startTime);
+    result->readWriteTime = readTimeAccum;
+    return result;
 }
 

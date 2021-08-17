@@ -37,6 +37,9 @@ void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
         PartitionCrossingFIFO_writeTmp->port0_imag[i] = 0;
     }
 
+    //==== Setup duty cycle ====
+    double writeTimeAccum = 0;
+
     //==== Signal Ready ====
     atomic_thread_fence(memory_order_acquire);
     atomic_flag_clear_explicit(readyFlag, memory_order_release);
@@ -82,7 +85,11 @@ void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
         }
 
         _mm_mfence(); //No loading/storing should cross this line.  It in general should not because speculative writing should not be comitted.  See AMD Archetecture Programmer's Manual: 3.9.1.2 Write Ordering
-        
+
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        clock_gettime(CLOCK_MONOTONIC, &startWritingTime);
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+
         //Write output FIFO(s)
         //  --- Pulled from generated Laminar code (bool changed from vitisBool_t to bool)
         { //Begin Scope for PartitionCrossingFIFO FIFO Write
@@ -102,6 +109,26 @@ void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
             //Update Write Ptr
             atomic_store_explicit(PartitionCrossingFIFO_writeOffsetPtr_re, PartitionCrossingFIFO_writeOffsetPtr_re_local, memory_order_release);
         } //End Scope for PartitionCrossingFIFO FIFO Write
+
+        timespec_t stopWritingTime;
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        clock_gettime(CLOCK_MONOTONIC, &stopWritingTime);
+        asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+        double writeDuration = difftimespec(&stopWritingTime, &startWritingTime);
+
+        writeTimeAccum += writeDuration;
+
+        double tgtStallDuration = writeDuration/(TGT_DUTY_CYCLE) - writeDuration;
+
+        //Try to wait for such an amount of time that the target duty cycle is met
+        double stallDuration;
+        do{
+            timespec_t stallTime;
+            asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+            clock_gettime(CLOCK_MONOTONIC, &stallTime);
+            asm volatile("" ::: "memory"); //Stop Re-ordering of timer
+            stallDuration = difftimespec(&stallTime, &stopWritingTime);
+        }while(stallDuration<tgtStallDuration);
     }
 
     timespec_t stopTime;
@@ -112,7 +139,8 @@ void *fifo_server_thread(void* args) __attribute__((no_builtin("memcpy"))) { //h
     free(PartitionCrossingFIFO_writeTmp);
 
     //Return results
-    double* duration = malloc(sizeof(double));
-    *duration = difftimespec(&stopTime, &startTime);
-    return duration;
+    laminar_fifo_result_t* result = malloc(sizeof(laminar_fifo_result_t));
+    result->duration = difftimespec(&stopTime, &startTime);
+    result->readWriteTime = writeTimeAccum;
+    return result;
 }

@@ -114,7 +114,7 @@ memory_runner_thread_vars_t* startMemoryReaderThread(PartitionCrossingFIFO_t* bu
     return startMemoryThread(buffer_arrayPtr_re, startTrigger, readyFlag, core, memory_reader_thread);
 }
 
-void collectResultsMemory(memory_runner_thread_vars_t **threadVars, double *memoryTimes, int numFIFOs){
+void collectResultsMemory(memory_runner_thread_vars_t **threadVars, laminar_fifo_result_t *memoryResults, int numFIFOs){
     for(int i = 0; i<numFIFOs; i++){
         int status;
         void *memoryResult;
@@ -126,8 +126,8 @@ void collectResultsMemory(memory_runner_thread_vars_t **threadVars, double *memo
             perror(NULL);
             exit(1);
         }
-        double *memoryResultCast = (double*) memoryResult;
-        memoryTimes[i] = *memoryResultCast;
+        laminar_fifo_result_t *memoryResultCast = (laminar_fifo_result_t*) memoryResult;
+        memoryResults[i] = *memoryResultCast;
         free(memoryResultCast);
     }
 }
@@ -136,14 +136,14 @@ void cleanupMemoryThreadVars(memory_runner_thread_vars_t* vars){
     free(vars);
 }
 
-void writeMemoryResults(int *cpus, double *memoryTimes, int numFIFOs, char* reportFilename){
+void writeMemoryResults(int *cpus, laminar_fifo_result_t *memoryResults, int numFIFOs, char* reportFilename){
     FILE *resultsFile = fopen(reportFilename, "w");
-    fprintf(resultsFile, "CPU,MemoryTime,BytesTransacted,MemArrayBytes\n");
+    fprintf(resultsFile, "CPU,MemoryTime,MemoryReadWriteTime,BytesTransacted,MemArrayBytes\n");
 
     long long int bytesTransacted = TRANSACTIONS_BLKS*BLK_SIZE_BYTES;
     long long int memArrayBytes = MEMORY_ARRAY_SIZE_BYTES;
     for(int i = 0; i<numFIFOs; i++){
-        fprintf(resultsFile, "%d,%e,%lld,%lld\n", cpus[i], memoryTimes[i], bytesTransacted, memArrayBytes);
+        fprintf(resultsFile, "%d,%e,%e,%lld,%lld\n", cpus[i], memoryResults[i].duration, memoryResults[i].readWriteTime, bytesTransacted, memArrayBytes);
     }
 
     fclose(resultsFile);
@@ -187,11 +187,11 @@ void runMemoryBench(int *cpus, int numFIFOs, char* reportFilename, void* (*memor
     atomic_store_explicit(startTrigger, true, memory_order_release);
 
     //Wait for threads to finish
-    double memoryTimes[numFIFOs];
-    collectResultsMemory(threadVars, memoryTimes, numFIFOs);
+    laminar_fifo_result_t memoryResults[numFIFOs];
+    collectResultsMemory(threadVars, memoryResults, numFIFOs);
 
     //Write results
-    writeMemoryResults(cpus, memoryTimes, numFIFOs, reportFilename);
+    writeMemoryResults(cpus, memoryResults, numFIFOs, reportFilename);
 
     //Cleanup
     for(int i = 0; i<numFIFOs; i++){
