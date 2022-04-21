@@ -7,7 +7,7 @@ It is written purely in C to best match the code emitted by Laminar.  It is also
 
 It focuses on measuring the achieved data rates of the communication style used by Laminar.
 
-##Versions:
+## Versions:
 **NOTE: Different benchmarking techniques are stored in different branches of the git repository, current versions include:**
   - main: Standard FIFO with `__builtin_memcpy_inline`
   - builtinMemcpyInlined_tmpAligned: Standard FIFO with `__builtin_memcpy_inline` and aligned temporary
