@@ -1,4 +1,6 @@
 # laminarCommCharacterize
+Zenodo Concept DOI: [![Concept DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6526365.svg)](https://doi.org/10.5281/zenodo.6526365)
+
 Characterize Communication Patterns used by Laminar
 
 This is primarily a revision and extension of the core-core benchmark in https://github.com/ucb-cyarp/benchmarking
@@ -17,6 +19,8 @@ It focuses on measuring the achieved data rates of the communication style used 
   - myNonTemporalMemcpyAligned-seperateLoadStore: FIFO using my non-temporal implementation of memcpy with seperate functions for load and store to take advantage of elements stored in cache
 
 *Note that duty cycle branches are unfinished.*
+
+**NOTE to Zenodo Users:** Archives are stored with the branch name appending the version number.  Use the concept DOI [10.5281/zenodo.6526365](https://doi.org/10.5281/zenodo.6526365) and look for the version you are interested in.
 
 ## Citing This Software:
 If you would like to reference this software, please cite Christopher Yarp's Ph.D. thesis.
