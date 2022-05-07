@@ -20,7 +20,7 @@ It focuses on measuring the achieved data rates of the communication style used 
 
 *Note that duty cycle branches are unfinished.*
 
-**NOTE to Zenodo Users:** Archives are stored with the branch name appending the version number.  Use the concept DOI [10.5281/zenodo.6526365](https://doi.org/10.5281/zenodo.6526365) and look for the version you are interested in.
+**NOTE to Zenodo Users:** Archives are stored with the branch name appended to the version number.  Use the concept DOI [10.5281/zenodo.6526365](https://doi.org/10.5281/zenodo.6526365) and look for the version you are interested in.
 
 ## Citing This Software:
 If you would like to reference this software, please cite Christopher Yarp's Ph.D. thesis.
