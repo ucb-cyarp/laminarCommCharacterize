@@ -13,7 +13,7 @@ It focuses on measuring the achieved data rates of the communication style used 
 **NOTE: Different benchmarking techniques are stored in different branches of the git repository, current versions include:**
   - main: Standard FIFO with `__builtin_memcpy_inline`
   - builtinMemcpyInlined_tmpAligned: Standard FIFO with `__builtin_memcpy_inline` and aligned temporary
-  - myNonTemporalMemcpyAligned: Standard FIFO with my implementation of memcpy with aligned vector intrinsics
+  - myMemcpyAligned: Standard FIFO with my implementation of memcpy with aligned vector intrinsics
   - myMemcpyUnalignedWithAlignedTmp: Standard FIFO with my implementation of memcpy with unaligned vector intrinsics but with an aligned temporary
   - myNonTemporalMemcpyAligned: FIFO using my non-temporal implementation of memcpy
   - myNonTemporalMemcpyAligned-seperateLoadStore: FIFO using my non-temporal implementation of memcpy with seperate functions for load and store to take advantage of elements stored in cache
