@@ -18,7 +18,7 @@ It focuses on measuring the achieved data rates of the communication style used 
   - myNonTemporalMemcpyAligned: FIFO using my non-temporal implementation of memcpy
   - myNonTemporalMemcpyAligned-seperateLoadStore: FIFO using my non-temporal implementation of memcpy with seperate functions for load and store to take advantage of elements stored in cache
 
-*Note that duty cycle branches are unfinished.*
+*Note that duty cycle branches are unfinished.* 
 
 **NOTE to Zenodo Users:** Archives are stored with the branch name appended to the version number.  Use the concept DOI [10.5281/zenodo.6526365](https://doi.org/10.5281/zenodo.6526365) and look for the version you are interested in.
 
